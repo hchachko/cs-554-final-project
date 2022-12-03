@@ -1,0 +1,28 @@
+.navLink {
+	background-color: transparent;
+	border-radius: 3px;
+	color: lightgray;
+	text-decoration: none !important;
+	margin-right: 20px;
+    border: 1px solid transparent;
+}
+
+.navLink:hover {
+	background-color: transparent;
+    border-radius: 3px;
+	color: white;
+	border: 1px solid white;
+}
+
+.navLinkActive {
+    background-color:white;
+    border-radius: 3px;
+    color: #282c34;
+    text-decoration: none !important;
+    margin-right: 20px;
+    border: 1px solid transparent;
+}
+
+.navLinkActive:hover {
+    color: #282c34;
+}
