@@ -1,73 +1,80 @@
 const mongoCollections = require("../config/mongoCollections");
-const users = mongoCollections.users;
-const sweets = mongoCollections.genres;
+const genres = mongoCollections.genres;
 let { ObjectId } = require("mongodb");
 
-//Type checking
-function checkSweetData(sweetText, sweetMood, userId, username) {
-  if (!sweetText || !sweetMood || !userId || !username) {
-    throw "You must provide sweetText, sweetMood, and be logged in to create a new sweet";
-  } else if (typeof sweetText != "string" || typeof sweetMood != "string") {
-    throw "SweetText and sweetMood must be of type string";
-  } else if (sweetText.trim().length == 0 || sweetMood.trim().length == 0) {
-    throw "Error: SweetText and sweetMood must not be be empty.";
-  }
-}
-
-//createSweet
-async function createSweet(sweetText, sweetMood, userId, username) {
-  checkSweetData(sweetText, sweetMood, userId, username);
-
-  let moods = [
-    "Happy",
-    "Sad",
-    "Angry",
-    "Excited",
-    "Surprised",
-    "Loved",
-    "Blessed",
-    "Greatful",
-    "Blissful",
-    "Silly",
-    "Chill",
-    "Motivated",
-    "Emotional",
-    "Annoyed",
-    "Lucky",
-    "Determined",
-    "Bored",
-    "Hungry",
-    "Disappointed",
-    "Worried",
-  ];
-
-  if (!moods.includes(sweetMood)) {
-    throw "Error: Invalid mood selected.";
+async function createGenre(genre) {
+  if (!genre || typeof genre != "string" || genre.trim().length == 0) {
+    throw "You must provide a valid genre";
   }
 
-  const sweetsCollection = await sweets();
+  const genresCollection = await genres();
 
-  let newSweet = {
-    sweetText: sweetText,
-    sweetMood: sweetMood,
-    userThatPosted: {
-      _id: ObjectId(userId),
-      username: username,
-    },
-    replies: [],
-    likes: [],
+  const duplicateGenre = await genresCollection.findOne({
+    genre: genre,
+  });
+
+  if (duplicateGenre) {
+    throw "Error: An genre already exists for this type.";
+  }
+
+  let newGenre = {
+    genre: genre,
+    quotes: [],
+    status: false,
   };
 
-  const insertInfo = await sweetsCollection.insertOne(newSweet);
+  const insertInfo = await genresCollection.insertOne(newGenre);
   if (insertInfo.insertedCount === 0)
-    throw "Error: Could not create sweet successfully.";
+    throw "Error: Could not create genre successfully.";
 
-  const createdSweet = await getSweetById(insertInfo.insertedId.toString());
+  const createdGenre = await genresCollection.findOne({
+    genre: genre,
+  });
 
-  createdSweet._id = createdSweet._id.toString();
-
-  return createdSweet;
+  return createdGenre;
 }
+
+async function createQuote(genre, quote) {
+  if (
+    !genre ||
+    typeof genre != "string" ||
+    genre.trim().length == 0 ||
+    !quote ||
+    typeof quote != "string" ||
+    quote.trim().length == 0
+  ) {
+    throw "Error: Invalid genre parameters provided.";
+  }
+
+  const genresCollection = await genres();
+
+  let genreObj = await genresCollection.findOne({ genre: genre });
+
+  if (!genreObj) {
+    throw "Error: Could not find specified genre.";
+  }
+
+  let newQuote = {
+    _id: new ObjectId(),
+    quote: quote,
+    status: false,
+  };
+
+  genreObj["quotes"].push(newQuote);
+
+  const updatedData = await genresCollection.updateOne(
+    { genre: genre },
+    { $set: genreObj }
+  );
+
+  if (updatedData.modifiedCount == 0) {
+    throw "Error: Quote was not created successfully.";
+  }
+
+  return genreObj;
+}
+
+// -------------------------- Example Code --------------------------------
 
 //getAllSweets
 async function getAllSweets() {
@@ -138,52 +145,6 @@ async function updateSweet(sweetID, newSweetText, newSweetMood) {
   return await getSweetById(sweetID.toString());
 }
 
-//addReply
-
-async function addReply(sweetId, replyText, userId, username) {
-  if (
-    !sweetId ||
-    typeof sweetId != "string" ||
-    !replyText ||
-    typeof replyText != "string" ||
-    !userId ||
-    typeof userId != "string" ||
-    !username ||
-    typeof username != "string"
-  ) {
-    throw "Error: Invalid sweet parameters provided.";
-  }
-
-  const sweetsCollection = await sweets();
-  const sweet = await sweetsCollection.findOne({ _id: ObjectId(sweetId) });
-
-  if (!sweet) {
-    throw "Error: Could not find specified sweet.";
-  }
-
-  let reply = {
-    _id: new ObjectId(),
-    userThatPostedReply: {
-      _id: ObjectId(userId),
-      username: username,
-    },
-    reply: replyText,
-  };
-
-  sweet["replies"].push(reply);
-
-  const updatedData = await sweetsCollection.updateOne(
-    { _id: ObjectId(sweetId) },
-    { $set: sweet }
-  );
-
-  if (updatedData.modifiedCount == 0) {
-    throw "Error: Reply was not added successfully.";
-  }
-
-  return sweet;
-}
-
 //deleteReplyById
 
 async function deleteReply(sweetId, replyId, userId) {
@@ -240,12 +201,6 @@ async function likeSweet(sweetId, userId) {
 }
 
 module.exports = {
-  createSweet,
-  checkSweetData,
-  getSweetById,
-  updateSweet,
-  getAllSweets,
-  addReply,
-  deleteReply,
-  likeSweet,
+  createGenre,
+  createQuote,
 };
