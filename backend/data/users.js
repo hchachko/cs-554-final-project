@@ -121,8 +121,27 @@ async function updateStats(username, game_wpm, game_won) {
   }
 }
 
+async function getTopUsers() {
+  const usersCollection = await users();
+  let usersList = await usersCollection.find({}).sort({ wpm: -1 }).toArray();
+  let topUsers = [];
+  usersList = usersList.slice(0, 50);
+  usersList.forEach((element) => {
+    topUsers.push({
+      username: element.username,
+      wpm: element.wpm,
+      games_played: element.games_played,
+      games_won: element.games_won,
+    });
+  });
+
+  if (topUsers.length == 0) {
+    throw "Error: No users found in database.";
+  } else return topUsers;
+}
 module.exports = {
   createUser,
   checkUser,
   updateStats,
+  getTopUsers,
 };
