@@ -12,11 +12,7 @@ async function main() {
   // );
   //console.log(await genres.validateGenre("Music", true));
   console.log(
-    await genres.validateQuote(
-      "Music",
-      "HELLOKKKII quote here blah blah...",
-      true
-    )
+    await genres.validateQuote("Music", "HELLOII quote here blah blah...", true)
   );
 }
 
