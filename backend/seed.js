@@ -6,11 +6,11 @@ async function main() {
   // console.log(user1);
   // const update1 = await users.updateStats("test1", 200, false);
   // console.log(await users.getTopUsers());
-
-  // console.log(await genres.createGenre("Music"));
-  console.log(
-    await genres.createQuote("Music", "Test quote here blah blah...")
-  );
+  //console.log(await genres.createGenre("Music"));
+  // console.log(
+  //   await genres.createQuote("Music", "Test quote here blah blah...")
+  // );
+  console.log(await genres.validateGenre("Music", true));
 }
 
 main();

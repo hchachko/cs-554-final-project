@@ -74,7 +74,48 @@ async function createQuote(genre, quote) {
   return genreObj;
 }
 
-// -------------------------- Example Code --------------------------------
+async function validateGenre(genre, accept) {
+  if (
+    !genre ||
+    typeof genre != "string" ||
+    genre.trim().length == 0 ||
+    typeof accept != "boolean"
+  ) {
+    throw "Error: Invalid genre parameters provided.";
+  }
+
+  const genresCollection = await genres();
+
+  let genreObj = await genresCollection.findOne({ genre: genre });
+
+  if (!genreObj) {
+    throw "Error: Could not find specified genre.";
+  }
+
+  if (accept === true) {
+    if (genreObj["status"] === true) {
+      throw "Error: Genre has already been validated.";
+    } else {
+      genreObj["status"] = true;
+      const updatedData = await genresCollection.updateOne(
+        { genre: genre },
+        { $set: genreObj }
+      );
+      if (updatedData.modifiedCount == 0) {
+        throw "Error: Quote was not created successfully.";
+      }
+      return genreObj;
+    }
+  } else {
+    const deletedData = await genresCollection.deleteOne({ genre: genre });
+    if (deletedData.modifiedCount == 0) {
+      throw "Error: Quote was not created successfully.";
+    }
+    return genreObj;
+  }
+}
+
+// -------------------------- Example Code -------------------------------- //
 
 //getAllSweets
 async function getAllSweets() {
@@ -203,4 +244,5 @@ async function likeSweet(sweetId, userId) {
 module.exports = {
   createGenre,
   createQuote,
+  validateGenre,
 };
