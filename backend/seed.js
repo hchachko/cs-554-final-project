@@ -8,9 +8,16 @@ async function main() {
   // console.log(await users.getTopUsers());
   //console.log(await genres.createGenre("Music"));
   // console.log(
-  //   await genres.createQuote("Music", "Test quote here blah blah...")
+  //   await genres.createQuote("Music", "HELLOKKKII quote here blah blah...")
   // );
-  console.log(await genres.validateGenre("Music", true));
+  //console.log(await genres.validateGenre("Music", true));
+  console.log(
+    await genres.validateQuote(
+      "Music",
+      "HELLOKKKII quote here blah blah...",
+      true
+    )
+  );
 }
 
 main();

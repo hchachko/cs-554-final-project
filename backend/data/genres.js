@@ -54,6 +54,12 @@ async function createQuote(genre, quote) {
     throw "Error: Could not find specified genre.";
   }
 
+  const quotes = genreObj["quotes"];
+  let obj = quotes.find((o) => o["quote"] === quote);
+  if (obj) {
+    throw "Error: Quote already exists for this genre.";
+  }
+
   let newQuote = {
     _id: new ObjectId(),
     quote: quote,
@@ -115,6 +121,57 @@ async function validateGenre(genre, accept) {
   }
 }
 
+async function validateQuote(genre, quote, accept) {
+  if (
+    !genre ||
+    typeof genre != "string" ||
+    genre.trim().length == 0 ||
+    !quote ||
+    typeof quote != "string" ||
+    quote.trim().length == 0 ||
+    typeof accept != "boolean"
+  ) {
+    throw "Error: Invalid genre/quote parameters provided.";
+  }
+
+  const genresCollection = await genres();
+  let genreObj = await genresCollection.findOne({ genre: genre });
+  const quotes = genreObj["quotes"];
+
+  if (quotes.length === 0) {
+    throw "Error: There are no quotes for this genre.";
+  }
+
+  let obj = quotes.find((o) => o["quote"] === quote);
+
+  if (!obj) {
+    throw "Error: Could not find specified quote.";
+  }
+
+  if (accept === false) {
+    const updatedData = await genresCollection.updateOne(
+      { genre: genre },
+      { $pull: { quotes: { quote: quote } } },
+      false,
+      true
+    );
+    return "Quote was deleted successfully.";
+  } else {
+    if (obj["status"] === true) {
+      throw "Error: Quote has already been validated.";
+    } else {
+      obj["status"] = true;
+      const updatedData = await genresCollection.updateOne(
+        { genre: genre, "quotes.quote": quote },
+        { $set: { "quotes.$.status": true } }
+      );
+      if (updatedData.modifiedCount == 0) {
+        throw "Error: Quote was not updated successfully.";
+      }
+      return "Quote was successfully validated.";
+    }
+  }
+}
 // -------------------------- Example Code -------------------------------- //
 
 //getAllSweets
@@ -245,4 +302,5 @@ module.exports = {
   createGenre,
   createQuote,
   validateGenre,
+  validateQuote,
 };
