@@ -124,6 +124,11 @@ async function updateStats(username, game_wpm, game_won) {
 async function getTopUsers() {
   const usersCollection = await users();
   let usersList = await usersCollection.find({}).sort({ wpm: -1 }).toArray();
+
+  if ((usersList.length = 0)) {
+    throw "Error: No users found in database.";
+  }
+
   let topUsers = [];
   usersList = usersList.slice(0, 50);
   usersList.forEach((element) => {
@@ -139,9 +144,33 @@ async function getTopUsers() {
     throw "Error: No users found in database.";
   } else return topUsers;
 }
+
+//Delete user given username
+async function deleteUser(username) {
+  if (!username || typeof username != "string" || username.trim().length == 0) {
+    throw "Error: You must provide a valid username to delete a user.";
+  }
+
+  const usersCollection = await users();
+  const userExists = await usersCollection.findOne({
+    username,
+  });
+  if (!userExists) {
+    throw "Error: User does not exist.";
+  }
+
+  const deleteInfo = await usersCollection.deleteOne({ username });
+  if (deleteInfo.deletedCount === 0) {
+    throw "Error: Could not delete user.";
+  }
+
+  return true;
+}
+
 module.exports = {
   createUser,
   checkUser,
   updateStats,
   getTopUsers,
+  deleteUser,
 };

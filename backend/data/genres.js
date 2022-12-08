@@ -136,6 +136,11 @@ async function validateQuote(genre, quote, accept) {
 
   const genresCollection = await genres();
   let genreObj = await genresCollection.findOne({ genre: genre });
+
+  if (!genreObj) {
+    throw "Error: Could not find specified genre.";
+  }
+
   const quotes = genreObj["quotes"];
 
   if (quotes.length === 0) {
@@ -173,9 +178,62 @@ async function validateQuote(genre, quote, accept) {
   }
 }
 
+//Get all genres with a status of true
+async function getGenres() {
+  const genresCollection = await genres();
+  const genreData = await genresCollection.find({ status: true }).toArray();
+
+  if (!genreData || genreData.length === 0) {
+    throw "Error: Could not find any validated genres.";
+  }
+
+  let genreList = [];
+  for (genre of genreData) {
+    genreList.push(genre["genre"]);
+  }
+
+  return genreList;
+}
+
+//Get a random quote with a status of true from a genre
+async function getQuote(genre) {
+  if (!genre || typeof genre != "string" || genre.trim().length == 0) {
+    throw "Error: Invalid genre parameters provided.";
+  }
+
+  const genresCollection = await genres();
+  const genreData = await genresCollection.findOne({ genre: genre });
+
+  if (!genreData) {
+    throw "Error: Could not find specified genre.";
+  }
+
+  const quotes = genreData["quotes"];
+
+  if (quotes.length === 0) {
+    throw "Error: There are no quotes for this genre.";
+  }
+
+  let quoteList = [];
+  for (quote of quotes) {
+    if (quote["status"] === true) {
+      quoteList.push(quote["quote"]);
+    }
+  }
+
+  if (quoteList.length === 0) {
+    throw "Error: There are no validated quotes for this genre.";
+  }
+
+  let randomQuote = quoteList[Math.floor(Math.random() * quoteList.length)];
+
+  return randomQuote;
+}
 module.exports = {
   createGenre,
   createQuote,
   validateGenre,
   validateQuote,
+  getGenres,
+  getQuote,
 };
