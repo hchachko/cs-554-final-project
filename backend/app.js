@@ -26,6 +26,7 @@ let rooms = [];
         id: The string of a UUID of the room to be used for emitting data to room participants,
         players: { name, socketId } The names of all players currently in the room, for sending to all clients to display,
         playerCount: The Number of players currently in the room, used for gauging when rooms are full or not
+        inProgess: Boolean that determines whether current room's game is in progress and whether it's joinable
     }
 */
 
@@ -36,7 +37,7 @@ io.on("connection", (socket) => {
         if (rooms.length > 0) { // if there are already public rooms, hit this condition to join one 
             let allRoomsFull = true;
             for (let i = 0; i < rooms.length; i++) {
-                if (rooms[i].playerCount === 5) {
+                if (rooms[i].inProgress || rooms[i].playerCount === 5) {
                     continue;
                 }
                 // if there are any rooms with space, join it
@@ -45,6 +46,7 @@ io.on("connection", (socket) => {
                 socket.join(rooms[i].id);
                 socket.emit("joined", rooms[i].players.slice(0, -1), rooms[i].id);
                 socket.to(rooms[i].id).emit("new_player_joined", rooms[i].players[rooms[i].players.length - 1]);
+                io.in(rooms[i].id).emit("countdown", 6); // set lobby countdown back to 5 each time someone joins
                 allRoomsFull = false; // set to false to let the next if-statement know that the user got into a room
                 break;
             }
@@ -53,25 +55,38 @@ io.on("connection", (socket) => {
                 let room = {
                     id: `${v4()}`,
                     players: [ {name: playerName, socketId: socket.id} ],
-                    playerCount: 1
+                    playerCount: 1,
+                    inProgress: false
                 };
                 rooms.push(room);
                 socket.join(room.id);
                 socket.emit("joined", [], room.id);
+                socket.emit("countdown", 6); // seconds
             }
         }
         else { // create new room if there aren't any to join
             let room = {
                 id: `${v4()}`,
                 players: [ {name: playerName, socketId: socket.id} ],
-                playerCount: 1
+                playerCount: 1,
+                inProgress: false
             };
             rooms.push(room);
             socket.join(room.id);
             socket.emit("joined", [], room.id);
+            socket.emit("countdown", 6); // seconds
         }
         console.log("Rooms: ");
         console.log(rooms);
+    });
+
+    // when a public game starts, this is called so that more players aren't able to queue into the room
+    socket.on("gameStart", (roomId) => {
+        for (let i = 0; i < rooms.length; i++) {
+            if (rooms[i].id === roomId && rooms[i].inProgress === false) {
+                rooms[i].inProgress = true;
+            }
+        }
     });
 
     // on disconnect, remove them from the rooms const and check if they're the last one to disconnect - 
