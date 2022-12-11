@@ -4,6 +4,7 @@ import { AuthContext } from "../firebase/Auth";
 import { Card, CardMedia } from "@mui/material";
 import { Grid, CardContent, Typography } from "@mui/material";
 import { makeStyles } from "@mui/styles";
+import axios from "axios";
 const useStyles = makeStyles({
   card: {
     maxWidth: 345,
@@ -32,7 +33,6 @@ function Account () {
   const classes = useStyles();
   const [buttonValue, setButtonValue] = useState("Edit Profile Pic");
   const [showForm, setShowForm] = useState(false);
-  let profilePicForm = null;
   function ProfilePicButtonChange (){
     if (buttonValue === "Edit Profile Pic"){
       setButtonValue("Cancel");
@@ -41,6 +41,13 @@ function Account () {
     else {
       setButtonValue("Edit Profile Pic");
       setShowForm(false);
+    }
+  }
+  async function updateProfilePic () {
+    try {
+      const { data } = await axios.post("http://localhost:4000/user/profilePic");
+    } catch (e) {
+      console.log(e);
     }
   }
   if (showForm) {
@@ -61,7 +68,7 @@ function Account () {
             />
           )}
           <br/>
-          <form>
+          <form onsubmit={updateProfilePic}>
             <br/>
             <label>Image URL:&nbsp;</label>
             <input type="text"></input>

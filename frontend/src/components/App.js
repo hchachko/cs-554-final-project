@@ -2,7 +2,7 @@ import React from "react";
 import "./App.css";
 import "./styling.css";
 import Home from "./Home";
-import Signup from "./Signup";
+import Signup from "./SignUp";
 import RaceHome from "./RaceHome";
 import RacePublic from "./RacePublic";
 import PrivateRoute from "./PrivateRoute";

@@ -17,7 +17,7 @@ function checkUserCredentials(username, password, email) {
     password.trim().length == 0 ||
     email.trim().length == 0
   ) {
-    throw "Error: Username, password, and email must be not be empty.";
+    throw "Error: Username, password, and email must not be empty.";
   }
 }
 
@@ -54,6 +54,7 @@ async function createUser(username, password, email) {
     username: username,
     password: hash,
     email: email,
+    profilePic: null,
     wpm: 0,
     games_played: 0,
     games_won: 0,
@@ -89,7 +90,40 @@ async function checkUser(username, password) {
   }
 }
 
+async function updateProfilePic(username, profilePic) {
+  if (arguments.length != 2) throw "updateProfilePic(username, profilePic)";
+  if (typeof username != 'string' || typeof profilePic != 'string') throw "Non-string input(s) detected";
+  username = username.trim().toLowerCase();
+  profilePic = profilePic.trim();
+  if (username.length == 0 || profilePic.length == 0) throw "Empty string input(s) detected";
+
+  const usersCollection = await users();
+  const userExists = await usersCollection.findOne({
+    username: username,
+  });
+
+  let oldProfilePic = userExists.profilePic;
+  
+  const newProfilePic = {
+    profilePic: profilePic,
+  };
+
+  const updatedData = await usersCollection.updateOne(
+    { username: username },
+    { $set: newProfilePic}
+  );
+
+  if (updatedData.modifiedCount == 0) {
+    throw "Error: User update was unsuccessful.";
+  }
+}
+
 async function updateStats(username, game_wpm, game_won) {
+  if (arguments.length != 3) throw "updateStats(username, game_wpm, game_won)";
+  if (typeof username != 'string' || typeof game_wpm != 'number' || typeof game_won != 'number') throw "Non-string and/or non-number input(s) detected.";
+  updateStats(username, game_wpm, game_won);
+  username = username.trim().toLowerCase();
+  if (username.length == 0) throw "Detected empty string input";
   const usersCollection = await users();
   const userExists = await usersCollection.findOne({
     username: username,
@@ -117,7 +151,7 @@ async function updateStats(username, game_wpm, game_won) {
   );
 
   if (updatedData.modifiedCount == 0) {
-    throw "Error: Sweet update was unsuccessful.";
+    throw "Error: User update was unsuccessful.";
   }
 }
 
@@ -170,6 +204,7 @@ async function deleteUser(username) {
 module.exports = {
   createUser,
   checkUser,
+  updateProfilePic,
   updateStats,
   getTopUsers,
   deleteUser,

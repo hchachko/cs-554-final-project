@@ -4,6 +4,7 @@ const app = express();
 const { Server } = require("socket.io");
 const http = require('http');
 const { v4 } = require("uuid");
+const configRoutes = require("./routes");
 
 app.use(cors());
 const server = http.createServer(app);
@@ -13,6 +14,8 @@ const io = new Server(server, {
         origin: "http://localhost:3000"
     },
 });
+
+configRoutes(app);
 
 server.listen(4000, () => {
     console.log(`backend listening on *:${4000}`);
