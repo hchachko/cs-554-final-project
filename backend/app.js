@@ -27,6 +27,8 @@ let rooms = [];
         players: { name, socketId } The names of all players currently in the room, for sending to all clients to display,
         playerCount: The Number of players currently in the room, used for gauging when rooms are full or not
         inProgess: Boolean that determines whether current room's game is in progress and whether it's joinable
+        quote: String of quote that racers will be typing. Pull random quote from database upon room's creation
+        genre: String of genre of race. Genre will determine what set of quotes to grab from in database. Users will select desired genre before searching for game, and if they're the player that creates a room, their genre is applied to the room
     }
 */
 
@@ -44,9 +46,9 @@ io.on("connection", (socket) => {
                 rooms[i].playerCount++;
                 rooms[i].players = [ ...rooms[i].players, {name: playerName, socketId: socket.id} ];
                 socket.join(rooms[i].id);
-                socket.emit("joined", rooms[i].players.slice(0, -1), rooms[i].id);
+                socket.emit("joined", rooms[i].players.slice(0, -1), rooms[i].id, rooms[i].quote);
                 socket.to(rooms[i].id).emit("new_player_joined", rooms[i].players[rooms[i].players.length - 1]);
-                io.in(rooms[i].id).emit("countdown", 6); // set lobby countdown back to 5 each time someone joins
+                io.in(rooms[i].id).emit("countdown", 6); // set lobby countdown back to 6 each time someone joins
                 allRoomsFull = false; // set to false to let the next if-statement know that the user got into a room
                 break;
             }
@@ -56,11 +58,12 @@ io.on("connection", (socket) => {
                     id: `${v4()}`,
                     players: [ {name: playerName, socketId: socket.id} ],
                     playerCount: 1,
-                    inProgress: false
+                    inProgress: false,
+                    quote: `A day may come, when the courage of men fails, when we forsake our friends and break all bonds of Fellowship, but it is not this day! An hour of wolves and shattered shields when the age of men comes crashing down! But it is not this day!`
                 };
                 rooms.push(room);
                 socket.join(room.id);
-                socket.emit("joined", [], room.id);
+                socket.emit("joined", [], room.id, room.quote);
                 socket.emit("countdown", 6); // seconds
             }
         }
@@ -69,11 +72,12 @@ io.on("connection", (socket) => {
                 id: `${v4()}`,
                 players: [ {name: playerName, socketId: socket.id} ],
                 playerCount: 1,
-                inProgress: false
+                inProgress: false,
+                quote: `A day may come, when the courage of men fails, when we forsake our friends and break all bonds of Fellowship, but it is not this day! An hour of wolves and shattered shields when the age of men comes crashing down! But it is not this day!`
             };
             rooms.push(room);
             socket.join(room.id);
-            socket.emit("joined", [], room.id);
+            socket.emit("joined", [], room.id, room.quote);
             socket.emit("countdown", 6); // seconds
         }
         console.log("Rooms: ");
