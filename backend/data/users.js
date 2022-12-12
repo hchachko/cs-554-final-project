@@ -3,56 +3,45 @@ const users = mongoCollections.users;
 const bcrypt = require("bcryptjs");
 const saltRounds = 8;
 
-function checkUserCredentials(username, password, email) {
-  if (!username || !password || !email) {
-    throw "Error: You must provide a username, password, and email to create a new user.";
-  } else if (
-    typeof username != "string" ||
-    typeof password != "string" ||
-    typeof email != "string"
-  ) {
-    throw "Error: Username, password, and email must be valid strings.";
-  } else if (
-    username.trim().length == 0 ||
-    password.trim().length == 0 ||
-    email.trim().length == 0
-  ) {
-    throw "Error: Username, password, and email must not be empty.";
+function checkUserCredentials(username, email) {
+  if (!username || !email) {
+    throw "Error: You must provide a username and email to create a new user.";
+  } else if (typeof username != "string" || typeof email != "string") {
+    throw "Error: Username, and email must be valid strings.";
+  } else if (username.trim().length == 0 || email.trim().length == 0) {
+    throw "Error: Username, and email must not be empty.";
   }
 }
 
-function checkUserCredentialsLogin(username, password) {
-  if (!username || !password) {
-    throw "Error: You must provide a username, and password to create an account.";
-  } else if (typeof username != "string" || typeof password != "string") {
-    throw "Error: Username, and password must be valid strings.";
-  } else if (username.trim().length == 0 || password.trim().length == 0) {
-    throw "Error: Username, and password must be not be empty.";
+function checkUserCredentialsLogin(username) {
+  if (!username) {
+    throw "Error: You must provide a username to create an account.";
+  } else if (typeof username != "string") {
+    throw "Error: Username must be valid strings.";
+  } else if (username.trim().length == 0) {
+    throw "Error: Username must be not be empty.";
   }
 }
 
-async function createUser(username, password, email) {
+async function createUser(username, email) {
   username = username.toLowerCase().trim();
-  password = password.trim();
   email = email.toLowerCase().trim();
 
-  checkUserCredentials(username, password, email);
+  checkUserCredentials(username, email);
 
+  console.log("POP");
   const usersCollection = await users();
 
   const duplicateUser = await usersCollection.findOne({
-    username: username,
+    email: email,
   });
 
   if (duplicateUser) {
-    throw "Error: An account already exists for this username.";
+    throw "Error: An account already exists for this email.";
   }
-
-  const hash = await bcrypt.hash(password, saltRounds);
 
   let newUser = {
     username: username,
-    password: hash,
     email: email,
     profilePic: null,
     wpm: 0,
@@ -92,10 +81,12 @@ async function checkUser(username, password) {
 
 async function updateProfilePic(username, profilePic) {
   if (arguments.length != 2) throw "updateProfilePic(username, profilePic)";
-  if (typeof username != 'string' || typeof profilePic != 'string') throw "Non-string input(s) detected";
+  if (typeof username != "string" || typeof profilePic != "string")
+    throw "Non-string input(s) detected";
   username = username.trim().toLowerCase();
   profilePic = profilePic.trim();
-  if (username.length == 0 || profilePic.length == 0) throw "Empty string input(s) detected";
+  if (username.length == 0 || profilePic.length == 0)
+    throw "Empty string input(s) detected";
 
   const usersCollection = await users();
   const userExists = await usersCollection.findOne({
@@ -103,14 +94,14 @@ async function updateProfilePic(username, profilePic) {
   });
 
   let oldProfilePic = userExists.profilePic;
-  
+
   const newProfilePic = {
     profilePic: profilePic,
   };
 
   const updatedData = await usersCollection.updateOne(
     { username: username },
-    { $set: newProfilePic}
+    { $set: newProfilePic }
   );
 
   if (updatedData.modifiedCount == 0) {
@@ -120,7 +111,12 @@ async function updateProfilePic(username, profilePic) {
 
 async function updateStats(username, game_wpm, game_won) {
   if (arguments.length != 3) throw "updateStats(username, game_wpm, game_won)";
-  if (typeof username != 'string' || typeof game_wpm != 'number' || typeof game_won != 'number') throw "Non-string and/or non-number input(s) detected.";
+  if (
+    typeof username != "string" ||
+    typeof game_wpm != "number" ||
+    typeof game_won != "number"
+  )
+    throw "Non-string and/or non-number input(s) detected.";
   updateStats(username, game_wpm, game_won);
   username = username.trim().toLowerCase();
   if (username.length == 0) throw "Detected empty string input";

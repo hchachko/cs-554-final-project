@@ -4,7 +4,7 @@ import "firebase/compat/firestore";
 
 async function doCreateUserWithEmailAndPassword(email, password, displayName) {
   await firebase.auth().createUserWithEmailAndPassword(email, password);
-  firebase.auth().currentUser.updateProfile({ displayName: displayName });
+  await firebase.auth().currentUser.updateProfile({ displayName: displayName });
 }
 
 async function doChangePassword(email, oldPassword, newPassword) {
