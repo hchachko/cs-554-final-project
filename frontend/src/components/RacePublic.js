@@ -1,25 +1,30 @@
 import React, {useEffect, useState, useRef} from 'react';
+import { NavLink } from 'react-router-dom';
 import io from 'socket.io-client';
 import { v4 } from 'uuid';
 
 
 function RacePublic() {
-    const [playerName, setPlayerName] = useState(`player ${v4()}`); // Your player
+    const [playerName, setPlayerName] = useState(`${v4()}`); // Your player
     const [room, setRoom] = useState('');   // Use for telling the server who to send your real-time typing progress to (the rest of the room) 
     const [players, setPlayers] = useState([]); // Other players
+    const [finishedPlayers, setFinishedPlayers] = useState([]);
     const [soloState, setSoloState] = useState(true); // False when there are other players in the game - if player plays themselves, game will not count for wins
     const [gameStarted, setGameStarted] = useState(false);
+    const [gameFinished, setGameFinished] = useState(false);
     const [countdown, setCountdown] = useState(undefined);
     const [countdownDisplay, setCountdownDisplay] = useState(undefined);
     const [raceQuote, setRaceQuote] = useState(undefined);
     const [raceInput, setRaceInput] = useState(''); // User input to compare against the quote at the inputIndex to determine whether user is hitting correct keys or not
     const [inputIndex, setInputIndex] = useState(0); // Index of where the user is in the race
-    const [inputStatus, setInputStatus] = useState(true); // Check inputStatus each time user input changes. True while the user inputs correct characters, false otherwise
-    const [charsSinceFalse, setCharsSinceFalse] = useState(0); // After 5 characters since inputting a false character, user is forced to backspace and correct their mistake in order to continue
+    const [charsSinceFalse, setCharsSinceFalse] = useState(0); // After a few characters since inputting a false character, user is forced to backspace and correct their mistake in order to continue
     const [correctChars, setCorrectChars] = useState('');
     const [incorrectChars, setIncorrectChars] = useState('');
     const [nextChar, setNextChar] = useState('');
     const [regularChars, setRegularChars] = useState('');
+    const [opponentInput, setOpponentInput] = useState([]);
+    const [indexOfLastEmit, setIndexOfLastEmit] = useState(0);
+
 
     const socket = useRef();
 
@@ -38,11 +43,11 @@ function RacePublic() {
             setRegularChars(quote.slice(1));
             if (existingPlayers.length > 0) {
                 setPlayers([ ...existingPlayers ]);
+                let emptyObjects = [];
+                for (let i = 0; i < existingPlayers.length; i++) { emptyObjects.push( {correctChars: '', incorrectChars: '', regularChars: quote} ) };
+                setOpponentInput([ ...emptyObjects ]);
+                setSoloState(false);
             }
-            console.log(players.length);
-            if (players.length > 0) {
-                soloState(false);
-            } 
             setRoom(room);
         });
 
@@ -58,12 +63,13 @@ function RacePublic() {
             setCountdown({count: count});
         });
 
-        socket.current.on("new_player_joined", (newPlayer) => { // response of other clients joining after this client
+        socket.current.on("new_player_joined", (newPlayer, quote) => { // response of other clients joining after this client
             console.log(`New Player Joined: ${newPlayer.name}`);
             if (soloState === true) {
                 setSoloState(false);
             }
             setPlayers([ ...players, newPlayer ]);
+            setOpponentInput( [ ...opponentInput, {correctChars: '', incorrectChars: '', regularChars: quote} ]);
         });
 
         socket.current.on("player_left", (playerSocket) => { // response of other clients leaving the lobby (remove them from the list)
@@ -74,6 +80,9 @@ function RacePublic() {
                 setSoloState(true);
             }
             setPlayers(copyPlayers);
+            let copyOpponentInput = [ ...opponentInput ];
+            copyOpponentInput.splice(leavingPlayerIndex, 1);
+            setOpponentInput(copyOpponentInput);
         });
 
         return () => {
@@ -93,7 +102,7 @@ function RacePublic() {
                 counter--;
                 if (counter === -1) {
                     clearInterval(interval);
-                    socket.current.emit("gameStart", room);
+                    socket.current.emit("game_start", room);
                     setGameStarted(true);
                 } 
             }, 1000);
@@ -108,7 +117,6 @@ function RacePublic() {
 
     // useEffect for analyzing user the client's race input
     useEffect(() => {
-
         function runUseEffect() {
             let i = inputIndex;
             let csf = charsSinceFalse;
@@ -118,6 +126,15 @@ function RacePublic() {
                         setNextChar(raceQuote[i + 1]);
                         setRegularChars(regularChars.slice(1));
                         setCorrectChars(correctChars + raceQuote[i]);
+                        if (raceQuote[i] === ' ' && i > indexOfLastEmit) {
+                            socket.current.emit("new_input", playerName, room, i - indexOfLastEmit);
+                            setIndexOfLastEmit(i);
+                        }
+                        if (raceInput.length === raceQuote.length) {
+                            console.log('race finished');
+                            socket.current.emit("new_input", playerName, room, i - indexOfLastEmit + 1);
+                            setGameFinished(true);
+                        }
                     }
                     else { // character is incorrect
                         setCharsSinceFalse(1);
@@ -146,6 +163,7 @@ function RacePublic() {
 
                 }
                 if (i < raceInput.length) { // user continued to type incorrectly ( not backspace ) 
+                    console.log('continued to be incorrect');
                     setCharsSinceFalse(csf + 1);
                     setNextChar(raceQuote[i + 1]);
                     setRegularChars(regularChars.slice(1));
@@ -153,13 +171,53 @@ function RacePublic() {
                     setInputIndex(i + 1);
                 }
             }
-    
         }
 
-        if (gameStarted) {
+        if (gameStarted && !gameFinished) {
             runUseEffect();
         }
     }, [raceInput]);
+
+    // useEffect for receiving other players' race input
+    useEffect(() => {
+        socket.current.on("opponent_input", (player, wordLength) => {
+            let oppIndex = players.findIndex((p) => p.name === player);
+            let copyOppInput = [ ...opponentInput];
+            let modifiedInput = copyOppInput[oppIndex];
+            
+            modifiedInput.correctChars += modifiedInput.regularChars.slice(0, wordLength);
+            modifiedInput.regularChars = modifiedInput.regularChars.slice(wordLength);
+
+            copyOppInput[oppIndex] = modifiedInput;
+            setOpponentInput(copyOppInput);
+        });
+
+        return () => {
+            socket.current.off('opponent_input');
+        }
+    }, [opponentInput]);
+
+    // useEffect for telling the server that you finished the race
+    useEffect(() => {
+        function runUseEffect() {
+            socket.current.emit("game_finish", playerName, room);
+        }
+
+        if (gameFinished) {
+            runUseEffect();
+        }
+    }, [gameFinished]);
+
+    // useEffect for listening in on player's finishing their race in order to get the place with which they finished
+    useEffect(() => {
+        socket.current.on("race_place", (playerName) => {
+            setFinishedPlayers([ ...finishedPlayers, playerName ])
+        });
+
+        return () => {
+            socket.current.off('race_place');
+        }
+    }, [finishedPlayers])
 
     // current placein for organizing players in the lobby on frontend - will adjust to reflect proper styling when we get there
     let i = 0;
@@ -170,14 +228,38 @@ function RacePublic() {
         return (
             <div key={i}>
                 <h3>{p.name}</h3>
-                <p>Opponents typing here</p>
-
+                <h3>{finishedPlayers.includes(p.name) && (
+                    finishedPlayers.indexOf(p.name) === 0 ? `${finishedPlayers.indexOf(p.name) + 1}st place!` : 
+                        (finishedPlayers.indexOf(p.name) === 1) ? `${finishedPlayers.indexOf(p.name) + 1}nd place!` :
+                            (finishedPlayers.indexOf(p.name === 2) ? `${finishedPlayers.indexOf(p.name) + 1}rd place!` : `4th place!`)
+                )}</h3>
+                <div>
+                    <span id='correct-chars'>{opponentInput[i-1].correctChars && opponentInput[i-1].correctChars}</span>
+                    <span id='incorrect-chars'>{opponentInput[i-1].incorrectChars && opponentInput[i-1].incorrectChars}</span>
+                    <span id='regular-chars'>{opponentInput[i-1].regularChars && opponentInput[i-1].regularChars}</span>
+                </div>
             </div>
         )
     });
 
-    const handleChange = (e) => {
-        setRaceInput(e.target.value);
+    const handleKeyDown = (e) => {
+        if (e.keyCode === 37 || e.keyCode === 38 || e.keyCode === 39) { // if user presses left, up, or right arrow, don't do anything
+            e.preventDefault();
+        }
+        else { 
+            e.target.selectionStart = e.target.value.length; // make sure any key press happens at the front of the input
+            const key = e.key;
+            if (key.length === 1 && charsSinceFalse < 5) {
+                setRaceInput(e.target.value + key);
+            }
+            else if (key === "Backspace") {
+                setRaceInput(e.target.value.slice(0,-1));
+            }
+        }
+    };
+
+    const handlePaste = (e) => {
+        e.preventDefault();
     };
 
 
@@ -198,18 +280,21 @@ function RacePublic() {
             <h2>{gameStarted ? "Type!" : (countdownDisplay ? `Race starting in: ${countdownDisplay}` : "Getting game countdown...")}</h2>
             <div>
                 <h3>{playerName}</h3>
-                <div>
-                    this is where you will type
-                </div>
+                <h3>{finishedPlayers.includes(playerName) && (
+                    finishedPlayers.indexOf(playerName) === 0 ? `${finishedPlayers.indexOf(playerName) + 1}st place!` : 
+                        (finishedPlayers.indexOf(playerName) === 1) ? `${finishedPlayers.indexOf(playerName) + 1}nd place!` :
+                            (finishedPlayers.indexOf(playerName === 2) ? `${finishedPlayers.indexOf(playerName) + 1}rd place!` : `4th place!`)
+                )}</h3>
                 <div>
                     <span id='correct-chars'>{correctChars && correctChars}</span>
                     <span id='incorrect-chars'>{incorrectChars && incorrectChars}</span>
                     <span id='next-char'>{nextChar && nextChar}</span>
                     <span id='regular-chars'>{regularChars && regularChars}</span>
                 </div>
-                <input type="text" onChange={handleChange} { ...maxLength } ></input>
+                <input type="text" onPaste={handlePaste} onKeyDown={handleKeyDown} { ...maxLength } ></input>
             </div>
             {playerJSX && playerJSX}
+            {gameFinished && <NavLink to='/game/'><button>New Game</button></NavLink>}
         </div>
     )
 }
