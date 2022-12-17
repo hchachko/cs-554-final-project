@@ -29,9 +29,9 @@ function App() {
               <Route path="/" element={<Home />} />
               <Route path="/login" element={<SignIn />} />
               <Route path="/signup" element={<Signup />} />
-              <Route path="/game" element={<PrivateRoute />}>
+              {/* <Route path="/game" element={<PrivateRoute />}> */}
                 <Route path="/game" element={<RaceHome />} />
-              </Route>
+              {/* </Route> */}
               <Route path="/game/public" element={<RacePublic />} />
               <Route path="/game/private" element={<RacePrivate />} />
               <Route path="/account" element={<PrivateRoute />}>

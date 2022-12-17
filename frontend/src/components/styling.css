@@ -26,3 +26,19 @@
 .navLinkActive:hover {
     color: #282c34;
 }
+
+#correct-chars {
+    color: forestgreen;
+}
+
+#incorrect-chars {
+    background-color: lightcoral;
+}
+
+#next-char {
+    text-decoration: underline;
+}
+
+#regular-chars {
+    color: black;
+}
