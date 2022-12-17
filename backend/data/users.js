@@ -79,18 +79,34 @@ async function checkUser(username, password) {
   }
 }
 
-async function updateProfilePic(username, profilePic) {
-  if (arguments.length != 2) throw "updateProfilePic(username, profilePic)";
-  if (typeof username != "string" || typeof profilePic != "string")
+async function getUser(username) {
+  username = username.toLowerCase();
+  checkUserCredentialsLogin(username);
+
+  const usersCollection = await users();
+
+  const userExists = await usersCollection.findOne({
+    username: username,
+  });
+
+  if (!userExists) {
+    throw "Error User credentials not found.";
+  }
+  return userExists;
+}
+
+async function updateProfilePic(email, profilePic) {
+  if (arguments.length != 2) throw "updateProfilePic(email, profilePic)";
+  if (typeof email != "string" || typeof profilePic != "string")
     throw "Non-string input(s) detected";
-  username = username.trim().toLowerCase();
+  email = email.trim().toLowerCase();
   profilePic = profilePic.trim();
-  if (username.length == 0 || profilePic.length == 0)
+  if (email.length == 0 || profilePic.length == 0)
     throw "Empty string input(s) detected";
 
   const usersCollection = await users();
   const userExists = await usersCollection.findOne({
-    username: username,
+    email: email,
   });
 
   let oldProfilePic = userExists.profilePic;
@@ -100,7 +116,7 @@ async function updateProfilePic(username, profilePic) {
   };
 
   const updatedData = await usersCollection.updateOne(
-    { username: username },
+    { email: email },
     { $set: newProfilePic }
   );
 
@@ -198,6 +214,7 @@ async function deleteUser(username) {
 }
 
 module.exports = {
+  getUser,
   createUser,
   checkUser,
   updateProfilePic,

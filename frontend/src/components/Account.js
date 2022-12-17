@@ -1,4 +1,4 @@
-import React, { useState, useContext } from "react";
+import React, { useState, useEffect, useContext } from "react";
 import SignOutButton from "./SignOutButton";
 import { AuthContext } from "../firebase/Auth";
 import { Card, CardMedia } from "@mui/material";
@@ -30,9 +30,34 @@ const useStyles = makeStyles({
 
 function Account () {
   const { currentUser } = useContext(AuthContext);
+  console.log(currentUser);
+  const [accountData, setAccountData] = useState({}); //useState({_id: "", username: "", email: "", profilePic: "", wpm: 0, games_played: 0, games_won: 0, admin: false});
+  useEffect(() => {
+    const handleMongo = async (e) => {
+      if (currentUser && currentUser._delegate && currentUser._delegate.displayName) {
+        console.log("This username is: "+ currentUser._delegate.displayName);
+        try {
+          const { data } = await axios.get("http://localhost:4000/user/"+currentUser._delegate.displayName);
+          console.log("test ", data);
+          setAccountData(data);
+        } catch (e) {
+          console.log(e);
+        }
+      } else {
+        //TODO do something if current user can't be found
+      }
+    };
+    handleMongo();
+  }, [currentUser]);
+  console.log("Account: ",accountData);
   const classes = useStyles();
   const [buttonValue, setButtonValue] = useState("Edit Profile Pic");
   const [showForm, setShowForm] = useState(false);
+  const [formData, setFormData] = useState({imageURL: ''});
+  const handleChange = (e) => {
+    setFormData((prev) => ({...prev, [e.target.name]: e.target.value}));
+    console.log(formData);
+  };
   function ProfilePicButtonChange (){
     if (buttonValue === "Edit Profile Pic"){
       setButtonValue("Cancel");
@@ -45,7 +70,11 @@ function Account () {
   }
   async function updateProfilePic () {
     try {
-      const { data } = await axios.post("http://localhost:4000/user/profilePic");
+      const { data } = await axios.patch("http://localhost:4000/user/profilePic", {
+        email: currentUser._delegate.email,
+        profilePic: formData.imageURL
+      });
+      console.log("Profile Pic Call", data);
     } catch (e) {
       console.log(e);
     }
@@ -67,16 +96,18 @@ function Account () {
               className={classes.media}
             />
           )}
-          <br/>
-          <form onsubmit={updateProfilePic}>
             <br/>
             <label>Image URL:&nbsp;</label>
-            <input type="text"></input>
+            <input
+              onChange={(e) => handleChange(e)}
+              id = 'imageURL'
+              name = 'imageURL'
+              placeholder = 'Image link...'
+            />
             <br/>
             <br/>
-            <button type="submit">Confirm</button>
+            <button onClick={updateProfilePic}>Confirm</button>
             <button onClick={ProfilePicButtonChange}>{buttonValue}</button>
-          </form>
           <br/>
           <Typography variant="body2" color="text.secondary">
             Email: {currentUser._delegate.email}
@@ -94,13 +125,10 @@ function Account () {
             <Typography gutterBottom variant="h5" component="div">
               {currentUser._delegate.displayName}
             </Typography>
-            {currentUser && (
-              <CardMedia
-                component="img"
-                alt="No User Image"
-                height="140"
-                image={currentUser._delegate.photoURL}
-                className={classes.media}
+            {accountData && accountData.profilePic && (
+              <img 
+              src= {accountData.profilePic}
+              alt="Profile"
               />
             )}
             <br/>
