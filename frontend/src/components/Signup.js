@@ -1,11 +1,14 @@
-import React, { useContext, useState } from "react";
+import React, { useContext, useState, useEffect } from "react";
 import { Navigate } from "react-router-dom";
 import { doCreateUserWithEmailAndPassword } from "../firebase/FirebaseFunctions";
 import { AuthContext } from "../firebase/Auth";
 import SocialSignIn from "./SocialSignIn";
+import axios from "axios";
 
 function SignUp() {
   const { currentUser } = useContext(AuthContext);
+  const [displayNamee, setDisplayNamee] = useState("");
+  const [emaill, setemaill] = useState("");
   const [pwMatch, setPwMatch] = useState("");
   const handleSignUp = async (e) => {
     e.preventDefault();
@@ -14,9 +17,9 @@ function SignUp() {
       setPwMatch("Passwords do not match");
       return false;
     }
+    setDisplayNamee(displayName.value);
 
     try {
-      console.log("FART", displayName.value);
       await doCreateUserWithEmailAndPassword(
         email.value,
         passwordOne.value,
@@ -26,6 +29,35 @@ function SignUp() {
       alert(error);
     }
   };
+
+  useEffect(() => {
+    const handleMongo = async (e) => {
+      if (currentUser) {
+        if (currentUser._delegate.displayName) {
+          try {
+            const { data } = await axios.post("http://localhost:4000/user", {
+              username: currentUser._delegate.displayName,
+              email: currentUser._delegate.email,
+            });
+            console.log("POOP", data);
+          } catch (e) {
+            console.log(e);
+          }
+        } else {
+          try {
+            const { data } = await axios.post("http://localhost:4000/user", {
+              username: displayNamee,
+              email: currentUser._delegate.email,
+            });
+            console.log("POOP", data);
+          } catch (e) {
+            console.log(e);
+          }
+        }
+      }
+    };
+    handleMongo();
+  }, [currentUser, displayNamee]);
 
   if (currentUser) {
     return <Navigate to="/" />;

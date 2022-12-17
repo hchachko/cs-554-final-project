@@ -20,7 +20,6 @@ export const AuthProvider = ({ children }) => {
   //const analytics = getAnalytics(app);
   const auth = firebase.auth();
   const db = firebase.firestore();
-  console.log("poop", app);
   const [currentUser, setCurrentUser] = useState(null);
   const [loadingUser, setLoadingUser] = useState(true);
 
