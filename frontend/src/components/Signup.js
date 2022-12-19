@@ -38,6 +38,7 @@ function SignUp() {
             const { data } = await axios.post("http://localhost:4000/user", {
               username: currentUser._delegate.displayName,
               email: currentUser._delegate.email,
+              googleAuth: true,
             });
             console.log("POOP", data);
           } catch (e) {
@@ -48,6 +49,7 @@ function SignUp() {
             const { data } = await axios.post("http://localhost:4000/user", {
               username: displayNamee,
               email: currentUser._delegate.email,
+              googleAuth: false,
             });
             console.log("POOP", data);
           } catch (e) {

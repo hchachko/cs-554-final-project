@@ -14,19 +14,20 @@ function checkUserCredentials(username, email) {
   }
 }
 
-function checkUserCredentialsLogin(username) {
-  if (!username) {
-    throw "Error: You must provide a username to create an account.";
-  } else if (typeof username != "string") {
+function checkUserCredentialsLogin(email) {
+  if (!email) {
+    throw "Error: You must provide a email to create an account.";
+  } else if (typeof email != "string") {
     throw "Error: Username must be valid strings.";
-  } else if (username.trim().length == 0) {
+  } else if (email.trim().length == 0) {
     throw "Error: Username must be not be empty.";
   }
 }
 
-async function createUser(username, email) {
+async function createUser(username, email, googleAuth) {
   username = username.toLowerCase().trim();
   email = email.toLowerCase().trim();
+  console.log("poopy fart", googleAuth);
 
   checkUserCredentials(username, email);
 
@@ -49,6 +50,7 @@ async function createUser(username, email) {
     games_played: 0,
     games_won: 0,
     admin: false,
+    googleAuth: googleAuth,
   };
 
   const insertInfo = await usersCollection.insertOne(newUser);
@@ -80,14 +82,14 @@ async function checkUser(username, password) {
   }
 }
 
-async function getUser(username) {
-  username = username.toLowerCase();
-  checkUserCredentialsLogin(username);
+async function getUser(email) {
+  email = email.toLowerCase();
+  checkUserCredentialsLogin(email);
 
   const usersCollection = await users();
 
   const userExists = await usersCollection.findOne({
-    username: username,
+    email: email,
   });
 
   if (!userExists) {
@@ -126,20 +128,18 @@ async function updateProfilePic(email, profilePic) {
   }
 }
 
-async function updateStats(username, game_wpm, game_won) {
-  if (arguments.length != 3) throw "updateStats(username, game_wpm, game_won)";
+async function updateStats(email, game_wpm, game_won) {
+  if (arguments.length != 3) throw "updateStats(email, game_wpm, game_won)";
   if (
-    typeof username != "string" ||
+    typeof email != "string" ||
     typeof game_wpm != "number" ||
-    typeof game_won != "number"
+    typeof game_won != "boolean"
   )
     throw "Non-string and/or non-number input(s) detected.";
-  updateStats(username, game_wpm, game_won);
-  username = username.trim().toLowerCase();
-  if (username.length == 0) throw "Detected empty string input";
+  if (email.length == 0) throw "Detected empty string input";
   const usersCollection = await users();
   const userExists = await usersCollection.findOne({
-    username: username,
+    email: email,
   });
 
   let old_wpm = userExists.wpm;
@@ -159,7 +159,7 @@ async function updateStats(username, game_wpm, game_won) {
   };
 
   const updatedData = await usersCollection.updateOne(
-    { username: username },
+    { email: email },
     { $set: newStats }
   );
 

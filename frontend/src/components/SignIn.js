@@ -1,7 +1,8 @@
-import React, { useContext } from "react";
+import React, { useContext, useState } from "react";
 import SocialSignIn from "./SocialSignIn";
 import { Navigate } from "react-router-dom";
 import { AuthContext } from "../firebase/Auth";
+import axios from "axios";
 import {
   doSignInWithEmailAndPassword,
   doPasswordReset,
@@ -9,14 +10,32 @@ import {
 
 function SignIn() {
   const { currentUser } = useContext(AuthContext);
+  const [user, setUser] = useState();
   const handleLogin = async (event) => {
     event.preventDefault();
     let { email, password } = event.target.elements;
-
+    let url = "http://localhost:4000/user/" + email.value;
     try {
-      await doSignInWithEmailAndPassword(email.value, password.value);
-    } catch (error) {
-      alert(error);
+      console.log(url);
+      const { data } = await axios.get(url);
+      if (data.googleAuth === false) {
+        try {
+          await doSignInWithEmailAndPassword(email.value, password.value);
+        } catch (error) {
+          alert(error);
+        }
+      } else {
+        alert(
+          "This email is associated with a Google authenticated account, please sign in with Google"
+        );
+      }
+    } catch (e) {
+      console.log(e);
+      try {
+        await doSignInWithEmailAndPassword(email.value, password.value);
+      } catch (error) {
+        alert("Username or password incorrect.");
+      }
     }
   };
 
