@@ -2,6 +2,7 @@ const mongoCollections = require("../config/mongoCollections");
 const users = mongoCollections.users;
 const bcrypt = require("bcryptjs");
 const saltRounds = 8;
+var im = require("imagemagick");
 
 function checkUserCredentials(username, email) {
   if (!username || !email) {
@@ -213,6 +214,16 @@ async function deleteUser(username) {
   return true;
 }
 
+function resizeImage(imagePath, width, height) {
+  im.convert(
+    [imagePath, "-resize", `${width}x${height}`, imagePath],
+    function (err, stdout) {
+      if (err) throw err;
+      console.log("stdout:", stdout);
+    }
+  );
+}
+
 module.exports = {
   getUser,
   createUser,
@@ -221,4 +232,5 @@ module.exports = {
   updateStats,
   getTopUsers,
   deleteUser,
+  resizeImage,
 };
