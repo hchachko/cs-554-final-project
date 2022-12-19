@@ -85,32 +85,22 @@ router.patch("/userStats", async (req, res) => {
 });
 
 router.patch("/profilePic", async (req, res) => {
-  //TODO change from checking email to username
-  console.log("found it");
+  router.post("/profilePic", async (req, res) => {
+  console.log("Running /profilePic");
   const getUserData = req.body;
+  console.log(getUserData);
   if (!getUserData.email || !getUserData.profilePic) {
-    res
-      .status(400)
-      .json({ error: "You must supply a email and profile picture" });
+    res.status(400).json({ error: "You must supply a email and profile picture" });
     return;
   }
   let email = getUserData.email;
   let profilePic = getUserData.profilePic;
   console.log(profilePic);
-  if (!email || !profilePic) {
-    res.status(400).json({
-      error: "Error: You must provide a email and profilePic.",
-    });
+  if (typeof email != "string" || typeof profilePic != "object") {
+    res.status(400).json({error: "Error: Email and profilePic must be valid types.",});
     return;
-  } else if (typeof email != "string" || typeof profilePic != "string") {
-    res.status(400).json({
-      error: "Error: Email and profilePic must be valid string.",
-    });
-    return;
-  } else if (email.trim().length == 0 || profilePic.trim().length == 0) {
-    res.status(400).json({
-      error: "Error: Email and profilePic must not be empty.",
-    });
+  } else if (email.trim().length == 0) {
+    res.status(400).json({error: "Error: Email and profilePic must not be empty.",});
     return;
   }
   try {

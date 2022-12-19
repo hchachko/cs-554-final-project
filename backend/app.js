@@ -7,6 +7,7 @@ const { v4 } = require("uuid");
 const configRoutes = require("./routes");
 const bp = require("body-parser");
 app.use(bp.json());
+app.use(express.static('public'))
 app.use(bp.urlencoded({ extended: true }));
 app.use(cors());
 const server = http.createServer(app);

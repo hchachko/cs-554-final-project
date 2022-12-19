@@ -100,12 +100,11 @@ async function getUser(email) {
 
 async function updateProfilePic(email, profilePic) {
   if (arguments.length != 2) throw "updateProfilePic(email, profilePic)";
-  if (typeof email != "string" || typeof profilePic != "string")
-    throw "Non-string input(s) detected";
+  if (typeof email != "string" || typeof profilePic != "object")
+    throw "Non-valid input(s) detected";
   email = email.trim().toLowerCase();
-  profilePic = profilePic.trim();
-  if (email.length == 0 || profilePic.length == 0)
-    throw "Empty string input(s) detected";
+  if (email.length == 0)
+    throw "Empty string input detected";
 
   const usersCollection = await users();
   const userExists = await usersCollection.findOne({
@@ -113,7 +112,7 @@ async function updateProfilePic(email, profilePic) {
   });
 
   let oldProfilePic = userExists.profilePic;
-
+  if (oldProfilePic == profilePic) return "No changes needed!"
   const newProfilePic = {
     profilePic: profilePic,
   };
