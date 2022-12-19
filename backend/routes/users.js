@@ -95,36 +95,4 @@ router.patch("/userStats", async (req, res) => {
   }
 });
 
-router.post("/profilePic", async (req, res) => {
-  console.log("Running /profilePic");
-  const getUserData = req.body;
-  console.log(getUserData);
-  if (!getUserData.email || !getUserData.profilePic) {
-    res
-      .status(400)
-      .json({ error: "You must supply a email and profile picture" });
-    return;
-  }
-  let email = getUserData.email;
-  let profilePic = getUserData.profilePic;
-  console.log(profilePic);
-  if (typeof email != "string" || typeof profilePic != "object") {
-    res
-      .status(400)
-      .json({ error: "Error: Email and profilePic must be valid types." });
-    return;
-  } else if (email.trim().length == 0) {
-    res
-      .status(400)
-      .json({ error: "Error: Email and profilePic must not be empty." });
-    return;
-  }
-  try {
-    updatedUser = await usersData.updateProfilePic(email, profilePic);
-    res.json(updatedUser);
-  } catch (e) {
-    console.log(e);
-  }
-});
-
 module.exports = router;

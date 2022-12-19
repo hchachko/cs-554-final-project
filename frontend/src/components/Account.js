@@ -50,14 +50,14 @@ function Account() {
 
   async function updateProfilePic () {
     try {
-      const formData = new FormData();
+      let formData = new FormData();
       formData.append('file', fileData);
       formData.append('fileName', fileData.name);
       console.log("This is what's being sent", formData);
       const config = {
         headers: {
-          'Content-Type': 'multipart/form-data', 
-        },
+            'Content-Type': 'multipart/form-data', 
+        }
       };
       const { data } = await axios.post("http://localhost:4000/user/profilePic", /*{
         email: currentUser._delegate.email,
@@ -106,7 +106,7 @@ function Account() {
                   <input
                     onChange={(e) => handleChange(e)}
                     id = 'imageURL'
-                    name = 'imageURL'
+                    name = 'file'
                     placeholder = 'Image link...'
                     type="file"
                     accept="image/*"
