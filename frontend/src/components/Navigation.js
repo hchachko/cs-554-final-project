@@ -31,6 +31,12 @@ const NavigationAuth = () => {
         >
           Account
         </NavLink>
+        <NavLink
+          to="/leaderboard"
+          className={({ isActive }) => (isActive ? "navLinkActive" : "navLink")}
+        >
+          Leaderboard
+        </NavLink>
       </nav>
     </header>
   );

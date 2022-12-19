@@ -171,9 +171,10 @@ async function getTopUsers() {
   const usersCollection = await users();
   let usersList = await usersCollection.find({}).sort({ wpm: -1 }).toArray();
 
-  if ((usersList.length = 0)) {
+  if (usersList.length === 0) {
     throw "Error: No users found in database.";
   }
+  console.log("poop", usersList);
 
   let topUsers = [];
   usersList = usersList.slice(0, 50);
@@ -186,9 +187,7 @@ async function getTopUsers() {
     });
   });
 
-  if (topUsers.length == 0) {
-    throw "Error: No users found in database.";
-  } else return topUsers;
+  return topUsers;
 }
 
 //Delete user given username

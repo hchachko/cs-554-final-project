@@ -4,6 +4,17 @@ const data = require("../data");
 const usersData = data.users;
 let { ObjectId } = require("mongodb");
 
+router.get("/leaderboard", async (req, res) => {
+  try {
+    let leaderboard = await usersData.getTopUsers();
+    console.log("FARTER", leaderboard);
+    res.json(leaderboard);
+  } catch (e) {
+    console.log(e);
+    res.status(400).json({ error: e });
+  }
+});
+
 router.get("/:email", async (req, res) => {
   console.log("gizzard");
   console.log(req.params);
