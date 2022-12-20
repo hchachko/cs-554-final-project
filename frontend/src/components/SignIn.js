@@ -1,4 +1,4 @@
-import React, { useContext, useState } from "react";
+import React, { useContext, useState, useEffect } from "react";
 import SocialSignIn from "./SocialSignIn";
 import { Navigate } from "react-router-dom";
 import { AuthContext } from "../firebase/Auth";
@@ -38,6 +38,25 @@ function SignIn() {
       }
     }
   };
+  useEffect(() => {
+    const handleMongo = async (e) => {
+      if (currentUser) {
+        if (currentUser._delegate.displayName) {
+          try {
+            const { data } = await axios.post("http://localhost:4000/user", {
+              username: currentUser._delegate.displayName,
+              email: currentUser._delegate.email,
+              googleAuth: true,
+            });
+            console.log("POOP", data);
+          } catch (e) {
+            console.log(e);
+          }
+        }
+      }
+    };
+    handleMongo();
+  }, [currentUser]);
 
   const passwordReset = (event) => {
     event.preventDefault();
