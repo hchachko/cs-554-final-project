@@ -96,7 +96,7 @@ function Account() {
           <Typography gutterBottom variant="h5" component="div">
             {currentUser._delegate.displayName}
           </Typography>
-          {accountData && accountData.profilePic.originalname && (
+          {accountData && accountData.profilePic && (
             <img
               src={
                 "http://localhost:4000/uploads/" +
