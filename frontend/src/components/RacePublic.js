@@ -482,7 +482,9 @@ function RacePublic() {
           <span id="next-char">{nextChar && nextChar}</span>
           <span id="regular-chars">{regularChars && regularChars}</span>
         </div>
+        <label for="userText">Type here:&nbsp;</label>
         <input
+          id = "userText"
           type="text"
           onPaste={handlePaste}
           onKeyDown={handleKeyDown}

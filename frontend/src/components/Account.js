@@ -43,8 +43,6 @@ function Account() {
         } catch (e) {
           console.log(e);
         }
-      } else {
-        //TODO do something if current user can't be found
       }
     };
     handleMongo();
@@ -104,10 +102,10 @@ function Account() {
               <div>
                 <form onSubmit={updateProfilePic}>
                   <br/>
-                  <label>Image URL:&nbsp;</label>
+                  <label for="uploadedImage" >Image URL:&nbsp;</label>
                   <input
                     onChange={(e) => handleChange(e)}
-                    id = 'imageURL'
+                    id = 'uploadedImage'
                     name = 'file'
                     placeholder = 'Image link...'
                     type="file"

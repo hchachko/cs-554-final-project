@@ -58,13 +58,14 @@ function Leaderboard() {
           <ol>
             {leaderboardData.map((user) => {
               return (
-                <div>
-                  <li>{user.username}</li>
+                <div key={user.username}>
+                  <li key={user.username}>{user.username}</li>
                   WPM (Words Per Minute): {user.wpm}
                   <br />
                   Games Played: {user.games_played}
                   <br />
                   Games Won: {user.games_won}
+                  <br />
                   <br />
                 </div>
               );
