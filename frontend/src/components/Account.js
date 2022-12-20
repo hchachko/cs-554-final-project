@@ -53,16 +53,15 @@ function Account() {
       let formData = new FormData();
       formData.append('file', fileData);
       formData.append('fileName', fileData.name);
+      formData.append('email', currentUser._delegate.email);
       console.log("This is what's being sent", formData);
       const config = {
         headers: {
-            'Content-Type': 'multipart/form-data', 
+            'Content-Type': 'multipart/form-data'
         }
       };
-      const { data } = await axios.post("http://localhost:4000/user/profilePic", /*{
-        email: currentUser._delegate.email,
-        profilePic: formData
-      }*/ formData, config);
+      const { data } = await axios.post("http://localhost:4000/user/profilePic", formData,
+      config);
     } catch (e) {
       console.log(e);
     }

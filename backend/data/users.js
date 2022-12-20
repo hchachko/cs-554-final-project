@@ -100,6 +100,7 @@ async function getUser(email) {
 
 async function updateProfilePic(email, profilePic) {
   if (arguments.length != 2) throw "updateProfilePic(email, profilePic)";
+  console.log(profilePic);
   if (typeof email != "string" || typeof profilePic != "object")
     throw "Non-valid input(s) detected";
   email = email.trim().toLowerCase();

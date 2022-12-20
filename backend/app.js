@@ -8,23 +8,43 @@ const configRoutes = require("./routes");
 const bp = require("body-parser");
 app.use(bp.json());
 const multer = require('multer');
-const upload = multer({ dest: 'uploads/' })
-app.use(upload.none())
+const upload = multer({ dest: 'uploads/', filename: function (req, file, callback) {
+  callback(null, file.originalname);
+} })
+//app.use(upload.any())
 app.use(bp.urlencoded({ extended: true }));
+//app.options('*', cors())
 app.use(cors());
 const server = http.createServer(app);
+let corsOptions = {
+      origin: [ '*' ]
+  };
 
 const io = new Server(server, {
   cors: {
-    origin: "http://localhost:3000",
+    origin: ["*"],  //http://localhost:3000
   },
 });
 
-app.post("/profilePic", upload.single('file'), async (req, res) => {
+const storage = multer.diskStorage({
+  destination: function(req, file, callback) {
+    callback(null, '.uploads');
+  },
+  filename: function (req, file, callback) {
+    callback(null, file.originalname);
+  }
+});
+
+
+app.post("/user/profilePic", upload.single('file'), async (req, res) => {
   console.log("Running /profilePic");
-  const getUserData = req.body;
-  console.log(req.file);
-  console.log(getUserData);
+  const getUserData = req.file;
+  console.log(getUserData)
+  //console.log(JSON.parse(JSON.stringify(req.body)));
+  /*console.log("Normal: ", getUserData.profilePic[0]);
+  for (const value of getUserData.profilePic[0].entries()) {
+    console.log(value);
+  }
   if (!getUserData.email || !getUserData.profilePic) {
     res
       .status(400)
@@ -34,7 +54,7 @@ app.post("/profilePic", upload.single('file'), async (req, res) => {
   let email = getUserData.email;
   let profilePic = getUserData.profilePic;
   console.log(profilePic);
-  if (typeof email != "string" || typeof profilePic != "object") {
+  if (typeof email != "string") {
     res
       .status(400)
       .json({ error: "Error: Email and profilePic must be valid types." });
@@ -45,12 +65,15 @@ app.post("/profilePic", upload.single('file'), async (req, res) => {
       .json({ error: "Error: Email and profilePic must not be empty." });
     return;
   }
-  try {
+  console.log("made it");
+  /*try {
+    const data = require("./data");
+    const usersData = data.users;
     updatedUser = await usersData.updateProfilePic(email, profilePic);
     res.json(updatedUser);
   } catch (e) {
     console.log(e);
-  }
+  }*/
 });
 
 configRoutes(app);
