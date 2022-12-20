@@ -42,7 +42,10 @@ var upload = multer({ storage: storage })
 app.post("/user/profilePic", upload.single('file'), async (req, res) => {
   console.log("Running /profilePic");
   const getUserData = req.file;
-  console.log(getUserData)
+  console.log(getUserData);
+  const data = require("./data");
+  const usersData = data.users;
+  updatedUser = usersData.resizeImage("./uploads/"+req.file.originalname, 250, 250);
   //console.log(JSON.parse(JSON.stringify(req.body)));
   /*console.log("Normal: ", getUserData.profilePic[0]);
   for (const value of getUserData.profilePic[0].entries()) {
