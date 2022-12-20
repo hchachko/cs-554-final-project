@@ -23,7 +23,12 @@ function RacePublic() {
     const [nextChar, setNextChar] = useState('');
     const [regularChars, setRegularChars] = useState('');
     const [opponentInput, setOpponentInput] = useState([]);
-    const [indexOfLastEmit, setIndexOfLastEmit] = useState(0);
+    const [indexOfLastEmit, setIndexOfLastEmit] = useState(0); // used to prevent emitting client's progress to other clients in the case of backspacing from a completed word and typing in the word again
+    // next couple states used for calculating user WPM (words per minute)
+    const [timeLapsed, setTimeLapsed] = useState(0); // seconds
+    const [numCorrect, setNumCorrect] = useState(0);
+    const [numIncorrect, setNumIncorrect] = useState(0);
+    const [oppWordsPerMinute, setOppWordsPerMinute] = useState([]); // words per minute of other players to display
 
 
     const socket = useRef();
@@ -43,9 +48,14 @@ function RacePublic() {
             setRegularChars(quote.slice(1));
             if (existingPlayers.length > 0) {
                 setPlayers([ ...existingPlayers ]);
-                let emptyObjects = [];
-                for (let i = 0; i < existingPlayers.length; i++) { emptyObjects.push( {correctChars: '', incorrectChars: '', regularChars: quote} ) };
-                setOpponentInput([ ...emptyObjects ]);
+                let opponentInputObjects = [];
+                let opponentWpm = [];
+                for (let i = 0; i < existingPlayers.length; i++) { 
+                    opponentInputObjects.push( {correctChars: '', incorrectChars: '', regularChars: quote} );
+                    opponentWpm.push(0); 
+                }
+                setOpponentInput([ ...opponentInputObjects ]);
+                setOppWordsPerMinute([ ...opponentWpm ]);
                 setSoloState(false);
             }
             setRoom(room);
@@ -70,6 +80,7 @@ function RacePublic() {
             }
             setPlayers([ ...players, newPlayer ]);
             setOpponentInput( [ ...opponentInput, {correctChars: '', incorrectChars: '', regularChars: quote} ]);
+            setOppWordsPerMinute([ ...oppWordsPerMinute, 0 ]);
         });
 
         socket.current.on("player_left", (playerSocket) => { // response of other clients leaving the lobby (remove them from the list)
@@ -218,6 +229,41 @@ function RacePublic() {
             socket.current.off('race_place');
         }
     }, [finishedPlayers])
+
+    // useEffect for receiving and updating words per minute from other clients
+    useEffect(() => {
+        socket.current.on("receive_wpm", (player, wpm) => {
+            let oppIndex = players.findIndex((p) => p.name === player);
+            let copyOppWpm = [ ...oppWordsPerMinute ];
+            copyOppWpm[oppIndex] = wpm;
+            setOppWordsPerMinute(copyOppWpm);
+        });
+        
+        return () => {
+            socket.current.off('receive_wpm');
+        }
+    }, [oppWordsPerMinute])
+
+    // useEffect for determing words per minute every second and emitting that to other clients
+    useEffect(() => {
+        function runUseEffect() {
+            let timeStarted = Date.now();
+            let interval;
+            let counter = 0
+            interval = setInterval(() => {
+            setCountdownDisplay(counter);
+                counter++;
+                if (numCorrect === raceQuote.length) {
+                    clearInterval(interval);
+                }
+
+            }, 1000);
+        }
+
+        if (gameStarted) {
+            runUseEffect();
+        }
+    }, [gameStarted])
 
     // current placein for organizing players in the lobby on frontend - will adjust to reflect proper styling when we get there
     let i = 0;
