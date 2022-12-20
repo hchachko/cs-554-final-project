@@ -41,45 +41,37 @@ var upload = multer({ storage: storage })
 
 app.post("/user/profilePic", upload.single('file'), async (req, res) => {
   console.log("Running /profilePic");
-  const getUserData = req.file;
-  console.log(getUserData);
+  console.log("File: ", req.file);
+  console.log("Body: ", req.body)
   const data = require("./data");
   const usersData = data.users;
   updatedUser = usersData.resizeImage("./uploads/"+req.file.originalname, 250, 250);
-  //console.log(JSON.parse(JSON.stringify(req.body)));
-  /*console.log("Normal: ", getUserData.profilePic[0]);
-  for (const value of getUserData.profilePic[0].entries()) {
-    console.log(value);
-  }
-  if (!getUserData.email || !getUserData.profilePic) {
+  if (!req.body.email || !req.body.fileName || req.body.file) {
     res
       .status(400)
-      .json({ error: "You must supply a email and profile picture" });
+      .json({ error: "You must supply a email, filename, and profile picture" });
     return;
   }
-  let email = getUserData.email;
-  let profilePic = getUserData.profilePic;
-  console.log(profilePic);
-  if (typeof email != "string") {
+  let email = req.body.email;
+  let fileName = req.body.fileName;
+  if (typeof email != "string" || typeof fileName != "string") {
     res
       .status(400)
-      .json({ error: "Error: Email and profilePic must be valid types." });
+      .json({ error: "Error: Email and filepath must be valid types." });
     return;
-  } else if (email.trim().length == 0) {
+  } else if (email.trim().length == 0 || fileName.trim().length == 0) {
     res
       .status(400)
-      .json({ error: "Error: Email and profilePic must not be empty." });
+      .json({ error: "Error: Email and fileName must not be empty." });
     return;
   }
   console.log("made it");
-  /*try {
-    const data = require("./data");
-    const usersData = data.users;
-    updatedUser = await usersData.updateProfilePic(email, profilePic);
+  try {
+    updatedUser = await usersData.updateProfilePic(req.file, email, fileName);
     res.json(updatedUser);
   } catch (e) {
     console.log(e);
-  }*/
+  }
 });
 
 configRoutes(app);
