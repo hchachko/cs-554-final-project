@@ -102,7 +102,7 @@ function Account() {
               <div>
                 <form onSubmit={updateProfilePic}>
                   <br/>
-                  <label for="uploadedImage" >Image URL:&nbsp;</label>
+                  <label htmlFor="uploadedImage" >Image URL:&nbsp;</label>
                   <input
                     onChange={(e) => handleChange(e)}
                     id = 'uploadedImage'

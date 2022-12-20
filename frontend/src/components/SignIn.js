@@ -48,7 +48,6 @@ function SignIn() {
               email: currentUser._delegate.email,
               googleAuth: true,
             });
-            console.log("POOP", data);
           } catch (e) {
             console.log(e);
           }

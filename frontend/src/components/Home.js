@@ -14,12 +14,12 @@ function Home() {
       </p>
       {/* Give each home-card div it's own section - one for public/private matchmaking, one for logging in/signing up, one for creating new quotes/"universes" */}
       {currentUser && (
-        <div className="home-card">
-          <div>
+        <div>
+          <div className="home-card">
             <h2>Find a game!</h2>
             <p>Play against other players on the site's server!</p>
             <Link to="/game/">
-              <button>Play</button>
+              Play
             </Link>
           </div>
         </div>
@@ -31,13 +31,13 @@ function Home() {
           <div>
             <h3>Login</h3>
             <Link to="/login">
-              <button>Login</button>
+              Login
             </Link>
           </div>
           <div>
             <h3>Sign up</h3>
             <Link to="/signup">
-              <button>Create Account</button>
+              Create Account
             </Link>
           </div>
         </div>

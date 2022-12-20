@@ -65,13 +65,6 @@ function RaceHome() {
         <button>Public Match</button>
         }
       </div>
-      <div>
-        <h3>Private Match</h3>
-        <p>Play against your friends in private lobbies!</p>
-        <Link to='/game/private'>
-          <button>Private Match</button>
-        </Link>
-      </div>
     </div>
   )
 }

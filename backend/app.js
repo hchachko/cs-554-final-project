@@ -22,7 +22,7 @@ let corsOptions = {
 
 const io = new Server(server, {
   cors: {
-    origin: "http://localhost:3000" //http://localhost:3000
+    origin: "http://localhost:3000"
   },
 });
 
@@ -75,7 +75,6 @@ app.post("/user/profilePic", upload.single("file"), async (req, res) => {
       .json({ error: "Error: Email and fileName must not be empty." });
     return;
   }
-  console.log("made it");
   try {
     updatedUser = await usersData.updateProfilePic(req.file, email, fileName);
     res.json(updatedUser);
@@ -90,7 +89,7 @@ server.listen(4000, () => {
   console.log(`backend listening on *:${4000}`);
 });
 
-// public rooms for now, possibly adding private rooms later if it's not too much of a hassle
+// public rooms
 let rooms = [];
 /*  room structure 
     {

@@ -53,7 +53,6 @@ function RacePublic() {
       console.log(`Players already in at time of joining:`);
       console.log(existingPlayers);
       setRaceQuote(quote);
-      console.log("poopopop", raceQuote);
       setNextChar(quote[0]);
       setRegularChars(quote.slice(1));
       if (existingPlayers.length > 0) {
