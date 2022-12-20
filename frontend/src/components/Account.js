@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useContext } from "react";
 import SignOutButton from "./SignOutButton";
 import { AuthContext } from "../firebase/Auth";
-import { Card} from "@mui/material";
+import { Card } from "@mui/material";
 import { Grid, CardContent, Typography } from "@mui/material";
 import { makeStyles } from "@mui/styles";
 import axios from "axios";
@@ -36,7 +36,9 @@ function Account() {
       if (currentUser && currentUser._delegate && currentUser._delegate.email) {
         console.log("This username is: " + currentUser._delegate.email);
         try {
-          const { data } = await axios.get("http://localhost:4000/user/"+currentUser._delegate.email);
+          const { data } = await axios.get(
+            "http://localhost:4000/user/" + currentUser._delegate.email
+          );
           setAccountData(data);
         } catch (e) {
           console.log(e);
@@ -48,39 +50,36 @@ function Account() {
     handleMongo();
   }, [currentUser]);
 
-  async function updateProfilePic () {
+  async function updateProfilePic (e) {
     try {
+      e.preventDefault();
       let formData = new FormData();
-      formData.append('file', fileData);
-      formData.append('fileName', fileData.name);
+      formData.append("file", fileData);
+      formData.append("fileName", fileData.name);
+      formData.append("email", currentUser._delegate.email);
       console.log("This is what's being sent", formData);
       const config = {
         headers: {
-            'Content-Type': 'multipart/form-data', 
-        }
+          "Content-Type": "multipart/form-data",
+        },
       };
-      const { data } = await axios.post("http://localhost:4000/user/profilePic", /*{
-        email: currentUser._delegate.email,
-        profilePic: formData
-      }*/ formData, config);
+      const { data } = await axios.post("http://localhost:4000/user/profilePic", formData, config);
+      window.location.reload();
     } catch (e) {
       console.log(e);
     }
   }
 
   const classes = useStyles();
-  const [buttonValue, setButtonValue] = useState("Edit Profile Pic");
   const [showForm, setShowForm] = useState(false);
-  const [fileData, setFileData] = useState({imageURL: ''});
+  const [fileData, setFileData] = useState({ imageURL: "" });
   const handleChange = (e) => {
     setFileData(e.target.files[0]);
   };
   function ProfilePicButtonChange() {
-    if (buttonValue === "Edit Profile Pic") {
-      setButtonValue("Cancel");
+    if (showForm === false) {
       setShowForm(true);
     } else {
-      setButtonValue("Edit Profile Pic");
       setShowForm(false);
     }
   }
@@ -92,15 +91,18 @@ function Account() {
           <Typography gutterBottom variant="h5" component="div">
             {currentUser._delegate.displayName}
           </Typography>
-            {accountData && accountData.profilePic && (
-              <img 
-              src= {accountData.profilePic}
+          {accountData && accountData.profilePic && (
+            <img
+              src={
+                "http://localhost:4000/uploads/" +
+                accountData.profilePic.originalname
+              }
               alt="Profile"
               />
             )}
             {showForm && (
               <div>
-                
+                <form onSubmit={updateProfilePic}>
                   <br/>
                   <label>Image URL:&nbsp;</label>
                   <input
@@ -110,16 +112,18 @@ function Account() {
                     placeholder = 'Image link...'
                     type="file"
                     accept="image/*"
+                    required
                   />
                   <br/>
                   <br/>
-                  <button onClick={updateProfilePic}>Confirm</button>
-                  <button onClick={ProfilePicButtonChange}>{buttonValue}</button>
-
-              <br/>
+                  <button type="Submit">Confirm</button>
+                  <button type="Button" onClick={ProfilePicButtonChange}>Cancel</button>
+                <br/>
+              </form>
               </div>
             ) }
-          {!showForm && (<div><button onClick={ProfilePicButtonChange}>{buttonValue}</button></div>)}
+            <br/>
+          {!showForm && <button onClick={ProfilePicButtonChange}>Upload Profile Picture</button>}
           <Typography variant="body2" color="text.secondary">
             Email: {currentUser._delegate.email}
           </Typography>

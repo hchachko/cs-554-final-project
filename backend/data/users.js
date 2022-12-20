@@ -98,33 +98,37 @@ async function getUser(email) {
   return userExists;
 }
 
-async function updateProfilePic(email, profilePic) {
-  if (arguments.length != 2) throw "updateProfilePic(email, profilePic)";
-  if (typeof email != "string" || typeof profilePic != "object")
+async function updateProfilePic(file, email, fileName) {
+  if (arguments.length != 3) throw "updateProfilePic(file, email, fileName)";
+  console.log(file);
+  if (typeof email != "string" || typeof fileName != "string")
     throw "Non-valid input(s) detected";
   email = email.trim().toLowerCase();
-  if (email.length == 0)
-    throw "Empty string input detected";
+  fileName = fileName.trim();
+  if (email.length == 0 || fileName.length == 0)
+    throw "Empty string input(s) detected";
 
   const usersCollection = await users();
   const userExists = await usersCollection.findOne({
     email: email,
   });
-
-  let oldProfilePic = userExists.profilePic;
-  if (oldProfilePic == profilePic) return "No changes needed!"
+  //TODO make sure the image is being properly stored in mongo then try rendering it via a get call
+  //You can test this by uploading an image to the account page, then the oputput  (resized by image magick) will appear in the uploads folder in the backend
+  //TY Bemin :)
+  let oldProfilePic = userExists.file;
+  if (oldProfilePic == file) return "No changes needed!";
   const newProfilePic = {
-    profilePic: profilePic,
+    profilePic: file,
   };
 
   const updatedData = await usersCollection.updateOne(
     { email: email },
     { $set: newProfilePic }
   );
-
-  if (updatedData.modifiedCount == 0) {
+  //TODO make it so uploading the same image doesn't error out
+  /*if (updatedData.modifiedCount == 0) {
     throw "Error: User update was unsuccessful.";
-  }
+  }*/
 }
 
 async function updateStats(email, game_wpm, game_won) {

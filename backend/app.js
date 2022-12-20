@@ -7,46 +7,76 @@ const { v4 } = require("uuid");
 const configRoutes = require("./routes");
 const bp = require("body-parser");
 app.use(bp.json());
-const multer = require('multer');
-const upload = multer({ dest: 'uploads/' })
-app.use(upload.none())
+const multer = require("multer");
+const path = require("path");
+//const upload = multer({ dest: 'uploads/'})
+//app.use(upload.any())
 app.use(bp.urlencoded({ extended: true }));
+//app.options('*', cors())
 app.use(cors());
 const server = http.createServer(app);
+let corsOptions = {
+  origin: ["*"],
+};
 
 const io = new Server(server, {
   cors: {
-    origin: "http://localhost:3000",
+    origin: "http://localhost:3000" //http://localhost:3000
   },
 });
 
-app.post("/profilePic", upload.single('file'), async (req, res) => {
+var storage = multer.diskStorage({
+  destination: function (req, file, cb) {
+    cb(null, "./uploads");
+  },
+  filename: function (req, file, cb) {
+    cb(null, file.originalname);
+  },
+});
+var upload = multer({ storage: storage });
+
+/*const upload = multer({
+  storage:storage
+})*/
+
+//static uploads route
+app.use("/uploads", express.static("uploads"));
+
+app.post("/user/profilePic", upload.single("file"), async (req, res) => {
   console.log("Running /profilePic");
-  const getUserData = req.body;
-  console.log(req.file);
-  console.log(getUserData);
-  if (!getUserData.email || !getUserData.profilePic) {
+  console.log("File: ", req.file);
+  console.log("Body: ", req.body);
+  const data = require("./data");
+  const usersData = data.users;
+  updatedUser = usersData.resizeImage(
+    "./uploads/" + req.file.originalname,
+    250,
+    250
+  );
+  if (!req.body.email || !req.body.fileName || req.body.file) {
     res
       .status(400)
-      .json({ error: "You must supply a email and profile picture" });
+      .json({
+        error: "You must supply a email, filename, and profile picture",
+      });
     return;
   }
-  let email = getUserData.email;
-  let profilePic = getUserData.profilePic;
-  console.log(profilePic);
-  if (typeof email != "string" || typeof profilePic != "object") {
+  let email = req.body.email;
+  let fileName = req.body.fileName;
+  if (typeof email != "string" || typeof fileName != "string") {
     res
       .status(400)
-      .json({ error: "Error: Email and profilePic must be valid types." });
+      .json({ error: "Error: Email and filepath must be valid types." });
     return;
-  } else if (email.trim().length == 0) {
+  } else if (email.trim().length == 0 || fileName.trim().length == 0) {
     res
       .status(400)
-      .json({ error: "Error: Email and profilePic must not be empty." });
+      .json({ error: "Error: Email and fileName must not be empty." });
     return;
   }
+  console.log("made it");
   try {
-    updatedUser = await usersData.updateProfilePic(email, profilePic);
+    updatedUser = await usersData.updateProfilePic(req.file, email, fileName);
     res.json(updatedUser);
   } catch (e) {
     console.log(e);
@@ -58,7 +88,6 @@ configRoutes(app);
 server.listen(4000, () => {
   console.log(`backend listening on *:${4000}`);
 });
-
 
 // public rooms for now, possibly adding private rooms later if it's not too much of a hassle
 let rooms = [];
@@ -74,75 +103,75 @@ let rooms = [];
 */
 
 io.on("connection", (socket) => {
-    console.log("new client connected: ", socket.id);
+  console.log("new client connected: ", socket.id);
 
-    socket.on("join_public", (playerName, playerEmail) => {
-        if (rooms.length > 0) { // if there are already public rooms, hit this condition to join one 
-            let allRoomsFull = true;
-            for (let i = 0; i < rooms.length; i++) {
-                if (rooms[i].inProgress || rooms[i].playerCount === 4) {
-                    continue;
-                }
-                // if there are any rooms with space, join it
-                rooms[i].playerCount++;
-                rooms[i].players = [ ...rooms[i].players, {displayName: playerName, email: playerEmail, socketId: socket.id} ];
-                socket.join(rooms[i].id);
-                socket.emit("joined", rooms[i].players.slice(0, -1), rooms[i].id, rooms[i].quote);
-                socket.to(rooms[i].id).emit("new_player_joined", rooms[i].players[rooms[i].players.length - 1], rooms[i].quote);
-                io.in(rooms[i].id).emit("countdown", 6); // set lobby countdown back to 6 each time someone joins
-                allRoomsFull = false; // set to false to let the next if-statement know that the user got into a room
-                break;
-            }
+  socket.on("join_public", (playerName, playerEmail) => {
+    if (rooms.length > 0) { // if there are already public rooms, hit this condition to join one 
+      let allRoomsFull = true;
+      for (let i = 0; i < rooms.length; i++) {
+        if (rooms[i].inProgress || rooms[i].playerCount === 4) {
+            continue;
+        }
+        // if there are any rooms with space, join it
+        rooms[i].playerCount++;
+        rooms[i].players = [ ...rooms[i].players, {displayName: playerName, email: playerEmail, socketId: socket.id} ];
+        socket.join(rooms[i].id);
+        socket.emit("joined", rooms[i].players.slice(0, -1), rooms[i].id, rooms[i].quote);
+        socket.to(rooms[i].id).emit("new_player_joined", rooms[i].players[rooms[i].players.length - 1], rooms[i].quote);
+        io.in(rooms[i].id).emit("countdown", 6); // set lobby countdown back to 6 each time someone joins
+        allRoomsFull = false; // set to false to let the next if-statement know that the user got into a room
+        break;
+      }
 
-            if (allRoomsFull === true) { // all rooms are full, create a new one
-                let room = {
-                    id: `${v4()}`,
-                    players: [ {displayName: playerName, email: playerEmail, socketId: socket.id} ],
-                    playerCount: 1,
-                    inProgress: false,
-                    quote: `A day may come, when the courage of men fails, when we forsake our friends and break all bonds of Fellowship, but it is not this day!`
-                };
-                rooms.push(room);
-                socket.join(room.id);
-                socket.emit("joined", [], room.id, room.quote);
-                socket.emit("countdown", 6); // seconds
-            }
-        }
-        else { // create new room if there aren't any to join
-            let room = {
-                id: `${v4()}`,
-                players: [ {displayName: playerName, email: playerEmail, socketId: socket.id} ],
-                playerCount: 1,
-                inProgress: false,
-                quote: `A day may come, when the courage of men fails, when we forsake our friends and break all bonds of Fellowship, but it is not this day!`
-            };
-            rooms.push(room);
-            socket.join(room.id);
-            socket.emit("joined", [], room.id, room.quote);
-            socket.emit("countdown", 6); // seconds
-        }
-        console.log("Rooms: ");
-        console.log(rooms);
-    });
+      if (allRoomsFull === true) { // all rooms are full, create a new one
+        let room = {
+          id: `${v4()}`,
+          players: [ {displayName: playerName, email: playerEmail, socketId: socket.id} ],
+          playerCount: 1,
+          inProgress: false,
+          quote: `A day may come, when the courage of men fails, when we forsake our friends and break all bonds of Fellowship, but it is not this day!`
+        };
+        rooms.push(room);
+        socket.join(room.id);
+        socket.emit("joined", [], room.id, room.quote);
+        socket.emit("countdown", 6); // seconds
+      }
+    }
+    else { // create new room if there aren't any to join
+      let room = {
+        id: `${v4()}`,
+        players: [ {displayName: playerName, email: playerEmail, socketId: socket.id} ],
+        playerCount: 1,
+        inProgress: false,
+        quote: `A day may come, when the courage of men fails, when we forsake our friends and break all bonds of Fellowship, but it is not this day!`
+      };
+      rooms.push(room);
+      socket.join(room.id);
+      socket.emit("joined", [], room.id, room.quote);
+      socket.emit("countdown", 6); // seconds
+    }
+    console.log("Rooms: ");
+    console.log(rooms);
+  });
 
     // when a public game starts, this is called so that more players aren't able to queue into the room
-    socket.on("game_start", (roomId) => {
-        for (let i = 0; i < rooms.length; i++) {
-            if (rooms[i].id === roomId && rooms[i].inProgress === false) {
-                rooms[i].inProgress = true;
-            }
-        }
-    });
+  socket.on("game_start", (roomId) => {
+    for (let i = 0; i < rooms.length; i++) {
+      if (rooms[i].id === roomId && rooms[i].inProgress === false) {
+        rooms[i].inProgress = true;
+      }
+    }
+  });
 
-    // hits whenever a player makes a successful input - relays the input back to all other clients
-    socket.on("new_input", (playerEmail, room, wordLength) => {
-        socket.to(room).emit("opponent_input", playerEmail, wordLength);
-    });
+  // hits whenever a player makes a successful input - relays the input back to all other clients
+  socket.on("new_input", (playerEmail, room, wordLength) => {
+      socket.to(room).emit("opponent_input", playerEmail, wordLength);
+  });
 
-    // when a client finishes the race, this is called to relay that client's name back to the entire room which lets each client who came in what place by checking the order of the players' names sent to the client
-    socket.on("game_finish", (playerEmail, roomId) => {
-        io.to(roomId).emit("race_place", playerEmail);
-    });
+  // when a client finishes the race, this is called to relay that client's name back to the entire room which lets each client who came in what place by checking the order of the players' names sent to the client
+  socket.on("game_finish", (playerEmail, roomId) => {
+      io.to(roomId).emit("race_place", playerEmail);
+  });
 
   socket.on("send_wpm", (playerEmail, room, wpm) => {
     socket.to(room).emit("receive_wpm", playerEmail, wpm);

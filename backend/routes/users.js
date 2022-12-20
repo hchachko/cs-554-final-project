@@ -7,7 +7,7 @@ let { ObjectId } = require("mongodb");
 router.get("/leaderboard", async (req, res) => {
   try {
     let leaderboard = await usersData.getTopUsers();
-    console.log("FARTER", leaderboard);
+    //console.log("FARTER", leaderboard);
     res.json(leaderboard);
   } catch (e) {
     console.log(e);
@@ -16,8 +16,8 @@ router.get("/leaderboard", async (req, res) => {
 });
 
 router.get("/:email", async (req, res) => {
-  console.log("gizzard");
-  console.log(req.params);
+  //console.log("gizzard");
+  //console.log(req.params);
   if (!req.params.email) {
     res.status(400).json({ error: "email needed" });
     return;
@@ -40,7 +40,7 @@ router.get("/:email", async (req, res) => {
     return;
   }
   try {
-    console.log(email);
+    //console.log(email);
     user = await usersData.getUser(email);
     res.json(user);
   } catch (e) {
@@ -94,5 +94,6 @@ router.patch("/userStats", async (req, res) => {
     console.log(e);
   }
 });
+
 
 module.exports = router;
