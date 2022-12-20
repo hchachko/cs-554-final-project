@@ -1,16 +1,19 @@
-import React, { useEffect, useState, useRef, useContext} from "react";
+import React, { useEffect, useState, useRef, useContext } from "react";
 import { NavLink, useLocation } from "react-router-dom";
 import io from "socket.io-client";
 import { AuthContext } from "../firebase/Auth";
 import axios from "axios";
-import useInterval from './useInterval';
+import useInterval from "./useInterval";
 
 function RacePublic() {
   const { currentUser } = useContext(AuthContext);
 
   const location = useLocation();
 
-  const [thisPlayer, setThisPlayer] = useState({displayName: currentUser._delegate.displayName, email: currentUser._delegate.email}); // Your player
+  const [thisPlayer, setThisPlayer] = useState({
+    displayName: currentUser._delegate.displayName,
+    email: currentUser._delegate.email,
+  }); // Your player
   const [room, setRoom] = useState(""); // Use for telling the server who to send your real-time typing progress to (the rest of the room)
   const [players, setPlayers] = useState([]); // Other players
   const [finishedPlayers, setFinishedPlayers] = useState([]);
@@ -55,7 +58,6 @@ function RacePublic() {
       console.log(`Players already in at time of joining:`);
       console.log(existingPlayers);
       setRaceQuote(quote);
-      console.log("poopopop", raceQuote);
       setNextChar(quote[0]);
       setRegularChars(quote.slice(1));
       if (existingPlayers.length > 0) {
@@ -70,8 +72,8 @@ function RacePublic() {
           });
           opponentWpm.push(0);
         }
-        setOpponentInput([...opponentInputObjects ]);
-        setOppWordsPerMinute([ ...opponentWpm ]);
+        setOpponentInput([...opponentInputObjects]);
+        setOppWordsPerMinute([...opponentWpm]);
         setSoloState(false);
       }
       setRoom(room);
@@ -101,7 +103,9 @@ function RacePublic() {
 
     socket.current.on("new_player_joined", (newPlayer, quote) => {
       // response of other clients joining after this client
-      console.log(`New Player Joined - displayName: ${newPlayer.displayName}, email: ${newPlayer.email}`);
+      console.log(
+        `New Player Joined - displayName: ${newPlayer.displayName}, email: ${newPlayer.email}`
+      );
       if (soloState === true) {
         setSoloState(false);
       }
@@ -110,7 +114,7 @@ function RacePublic() {
         ...opponentInput,
         { correctChars: "", incorrectChars: "", regularChars: quote },
       ]);
-      setOppWordsPerMinute([ ...oppWordsPerMinute, 0 ]);
+      setOppWordsPerMinute([...oppWordsPerMinute, 0]);
     });
 
     socket.current.on("player_left", (playerSocket) => {
@@ -291,15 +295,17 @@ function RacePublic() {
       let accuracy = numCorrect / (numCorrect + numIncorrect);
       let adjustedNumCorrect = numCorrect * accuracy;
       let numberOfWords = adjustedNumCorrect / 5;
-      let wpm =  (numberOfWords / (time / 60000)).toFixed(2);
-      if (isNaN(wpm)) { wpm = 0 }
+      let wpm = (numberOfWords / (time / 60000)).toFixed(2);
+      if (isNaN(wpm)) {
+        wpm = 0;
+      }
       socket.current.emit("send_wpm", thisPlayer.email, room, wpm);
       setWordsPerMinute(wpm);
       if (
         finishedPlayers.includes(thisPlayer.email) &&
         finishedPlayers.indexOf(thisPlayer.email) === 0
       ) {
-        console.log('first');
+        console.log("first");
         try {
           const { data } = await axios.patch(
             "http://localhost:4000/user/userStats",
@@ -314,7 +320,7 @@ function RacePublic() {
           console.log(e);
         }
       } else {
-        console.log('not first');
+        console.log("not first");
         try {
           const { data } = await axios.patch(
             "http://localhost:4000/user/userStats",
@@ -335,7 +341,7 @@ function RacePublic() {
     }
 
     socket.current.on("race_place", (playerEmail) => {
-      setFinishedPlayers([ ...finishedPlayers, playerEmail ]);
+      setFinishedPlayers([...finishedPlayers, playerEmail]);
     });
 
     return () => {
@@ -347,14 +353,14 @@ function RacePublic() {
   useEffect(() => {
     socket.current.on("receive_wpm", (playerEmail, wpm) => {
       let oppIndex = players.findIndex((p) => p.email === playerEmail);
-      let copyOppWpm = [ ...oppWordsPerMinute ];
+      let copyOppWpm = [...oppWordsPerMinute];
       copyOppWpm[oppIndex] = wpm;
       setOppWordsPerMinute(copyOppWpm);
     });
-    
+
     return () => {
-      socket.current.off('receive_wpm');
-    }
+      socket.current.off("receive_wpm");
+    };
   }, [oppWordsPerMinute]);
 
   //Timer to keep track of time for wpm
@@ -373,15 +379,20 @@ function RacePublic() {
     };
   }, [isActive, isPaused]);
 
-  useInterval(() => {
-    let accuracy = numCorrect / (numCorrect + numIncorrect);
-    let adjustedNumCorrect = numCorrect * accuracy;
-    let numberOfWords = adjustedNumCorrect / 5;
-    let wpm =  (numberOfWords / (time / 60000)).toFixed(2);
-    if (isNaN(wpm)) { wpm = 0 }
-    socket.current.emit("send_wpm", thisPlayer.email, room, wpm);
-    setWordsPerMinute(wpm);
-  }, isActive && !isPaused ? 3000 : null);
+  useInterval(
+    () => {
+      let accuracy = numCorrect / (numCorrect + numIncorrect);
+      let adjustedNumCorrect = numCorrect * accuracy;
+      let numberOfWords = adjustedNumCorrect / 5;
+      let wpm = (numberOfWords / (time / 60000)).toFixed(2);
+      if (isNaN(wpm)) {
+        wpm = 0;
+      }
+      socket.current.emit("send_wpm", thisPlayer.email, room, wpm);
+      setWordsPerMinute(wpm);
+    },
+    isActive && !isPaused ? 3000 : null
+  );
 
   const handleStart = () => {
     setIsActive(true);

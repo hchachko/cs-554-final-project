@@ -55,22 +55,22 @@ function Leaderboard() {
           <Typography gutterBottom variant="h5" component="div">
             WPM Leaderboard
           </Typography>
-          <ol>
-            {leaderboardData.map((user) => {
-              return (
-                <div key={user.username}>
-                  <li key={user.username}>{user.username}</li>
-                  WPM (Words Per Minute): {user.wpm}
-                  <br />
-                  Games Played: {user.games_played}
-                  <br />
-                  Games Won: {user.games_won}
-                  <br />
-                  <br />
-                </div>
-              );
-            })}
-          </ol>
+
+          {leaderboardData.map((user) => {
+            return (
+              <div key={user.username}>
+                <div key={user.username}>{user.username}</div>
+                WPM (Words Per Minute): {user.wpm}
+                <br />
+                Games Played: {user.games_played}
+                <br />
+                Games Won: {user.games_won}
+                <br />
+                <br />
+                <br />
+              </div>
+            );
+          })}
         </CardContent>
       </Card>
     )

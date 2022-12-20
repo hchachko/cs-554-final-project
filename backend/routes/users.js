@@ -7,7 +7,6 @@ let { ObjectId } = require("mongodb");
 router.get("/leaderboard", async (req, res) => {
   try {
     let leaderboard = await usersData.getTopUsers();
-    //console.log("FARTER", leaderboard);
     res.json(leaderboard);
   } catch (e) {
     console.log(e);
@@ -16,8 +15,6 @@ router.get("/leaderboard", async (req, res) => {
 });
 
 router.get("/:email", async (req, res) => {
-  //console.log("gizzard");
-  //console.log(req.params);
   if (!req.params.email) {
     res.status(400).json({ error: "email needed" });
     return;
@@ -82,7 +79,6 @@ router.post("/", async (req, res) => {
 });
 
 router.patch("/userStats", async (req, res) => {
-  console.log("it's working!", req.body.email);
   const getUserData = req.body;
   let email = getUserData.email;
   let game_wpm = Number(getUserData.game_wpm);
