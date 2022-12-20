@@ -2,15 +2,15 @@
 
   Pre-Reqs:
     
-  1) Have Node installed 
+  1) Have Node installed: 
   
     brew install node
   
-  2) Image magick client installed 
+  2) Imagemagick client installed:
     
     brew install imagemagick
     
-  3) Have mongo installed and running
+  3) Have mongo installed and running:
   
     brew install mongod
     
