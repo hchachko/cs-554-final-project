@@ -8,9 +8,8 @@ const configRoutes = require("./routes");
 const bp = require("body-parser");
 app.use(bp.json());
 const multer = require('multer');
-const upload = multer({ dest: 'uploads/', filename: function (req, file, callback) {
-  callback(null, file.originalname);
-} })
+const path = require('path')
+//const upload = multer({ dest: 'uploads/'})
 //app.use(upload.any())
 app.use(bp.urlencoded({ extended: true }));
 //app.options('*', cors())
@@ -26,15 +25,19 @@ const io = new Server(server, {
   },
 });
 
-const storage = multer.diskStorage({
-  destination: function(req, file, callback) {
-    callback(null, '.uploads');
+var storage = multer.diskStorage({
+  destination: function (req, file, cb) {
+    cb(null, './uploads')
   },
-  filename: function (req, file, callback) {
-    callback(null, file.originalname);
+  filename: function (req, file, cb) {
+    cb(null, file.originalname)
   }
-});
+})
+var upload = multer({ storage: storage })
 
+/*const upload = multer({
+  storage:storage
+})*/
 
 app.post("/user/profilePic", upload.single('file'), async (req, res) => {
   console.log("Running /profilePic");
