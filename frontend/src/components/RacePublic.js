@@ -9,7 +9,6 @@ function RacePublic() {
   const { currentUser } = useContext(AuthContext);
 
   const location = useLocation();
-  const { genre } = location.state;
 
   const [thisPlayer, setThisPlayer] = useState({
     displayName: currentUser._delegate.displayName,
@@ -40,7 +39,8 @@ function RacePublic() {
   const [isActive, setIsActive] = useState(false);
   const [isPaused, setIsPaused] = useState(true);
   const [time, setTime] = useState(0);
-  const [haveNotPostedStats, setHaveNotPosetdStats] = useState(true);
+  const [haveNotPostedStats, setHaveNotPostedStats] = useState(true);
+  const [noGenreSelected, setNoGenreSelected] = useState(false);
 
   const socket = useRef();
 
@@ -48,12 +48,9 @@ function RacePublic() {
   useEffect(() => {
     socket.current = io("http://localhost:4000");
 
-    socket.current.emit(
-      "join_public",
-      thisPlayer.displayName,
-      thisPlayer.email,
-      genre
-    );
+    function initializeSocketConnection() {
+      socket.current.emit("join_public", thisPlayer.displayName, thisPlayer.email, location.state.genre);
+    };
 
     socket.current.on("joined", (existingPlayers, room, quote) => {
       // response from this client joining the lobby
@@ -81,6 +78,15 @@ function RacePublic() {
       }
       setRoom(room);
     });
+
+    // if user tries to go to route /game/public without going through /game and selecting a genre,
+    // they will not be conneted and must go back to select a genre
+    if (location.state === null) {
+      setNoGenreSelected(true);
+    }
+    else if (location.state.genre) {
+      initializeSocketConnection();
+    }
 
     return () => {
       socket.current.off("joined");
@@ -200,6 +206,7 @@ function RacePublic() {
               );
               setGameFinished(true);
             }
+            setInputIndex(i + 1);
           } else {
             // character is incorrect
             setCharsSinceFalse(1);
@@ -207,8 +214,8 @@ function RacePublic() {
             setRegularChars(regularChars.slice(1));
             setIncorrectChars(incorrectChars + raceQuote[i]);
             setNumIncorrect(nic + 1);
+            setInputIndex(i + 1);
           }
-          setInputIndex(i + 1);
         } else {
           // user backspaced
           console.log("before incorrect branch backspace");
@@ -225,7 +232,7 @@ function RacePublic() {
           setCharsSinceFalse(csf - 1);
           setIncorrectChars(incorrectChars.slice(0, -1));
           setNextChar(raceQuote[i - 1]);
-          setRegularChars(raceQuote[i] + regularChars);
+          if (i < raceQuote.length) { setRegularChars(raceQuote[i] + regularChars);}
           setInputIndex(i - 1);
         }
         if (i < raceInput.length) {
@@ -308,7 +315,7 @@ function RacePublic() {
               game_won: true,
             }
           );
-          setHaveNotPosetdStats(false);
+          setHaveNotPostedStats(false);
         } catch (e) {
           console.log(e);
         }
@@ -447,7 +454,7 @@ function RacePublic() {
     } else {
       e.target.selectionStart = e.target.value.length; // make sure any key press happens at the front of the input
       const key = e.key;
-      if (key.length === 1 && charsSinceFalse < 5) {
+      if (inputIndex < raceQuote.length && key.length === 1 && charsSinceFalse < 5) {
         setRaceInput(e.target.value + key);
       } else if (key === "Backspace") {
         setRaceInput(e.target.value.slice(0, -1));
@@ -469,56 +476,66 @@ function RacePublic() {
     maxLength.maxLength = 0;
   }
 
-  return (
-    <div>
-      <h2>Public Race in Room: {room}</h2>
-      <br />
-      <h2>
-        {gameStarted
-          ? "Type!"
-          : countdownDisplay
-          ? `Race starting in: ${countdownDisplay}`
-          : "Getting game countdown..."}
-      </h2>
+  if (noGenreSelected) {
+    return (
       <div>
-        <h3>{thisPlayer.displayName}</h3>
-        <h3>
-          {finishedPlayers.includes(thisPlayer.email) &&
-            (finishedPlayers.indexOf(thisPlayer.email) === 0
-              ? `${finishedPlayers.indexOf(thisPlayer.email) + 1}st place!`
-              : finishedPlayers.indexOf(thisPlayer.email) === 1
-              ? `${finishedPlayers.indexOf(thisPlayer.email) + 1}nd place!`
-              : finishedPlayers.indexOf(thisPlayer.email === 2)
-              ? `${finishedPlayers.indexOf(thisPlayer.email) + 1}rd place!`
-              : `4th place!`)}
-        </h3>
-        {soloState && (
-          <p>
-            Your stats will not be updated unless you play against another
-            player!
-          </p>
-        )}
-        <p>{wordsPerMinute} WPM</p>
-        <div>
-          <span id="correct-chars">{correctChars && correctChars}</span>
-          <span id="incorrect-chars">{incorrectChars && incorrectChars}</span>
-          <span id="next-char">{nextChar && nextChar}</span>
-          <span id="regular-chars">{regularChars && regularChars}</span>
-        </div>
-        <label htmlFor="userText">Type here:&nbsp;</label>
-        <input
-          id="userText"
-          type="text"
-          autoComplete="off"
-          onPaste={handlePaste}
-          onKeyDown={handleKeyDown}
-          {...maxLength}
-        ></input>
+        <h2>It appears that you have not selected a genre to queue from the 'Find a Game' page.</h2>
+        <p>Go back and selected a genre to be put into a live game!</p>
+        <NavLink to="/game/"><button>Go Back</button></NavLink>
       </div>
-      {playerJSX && playerJSX}
-      {gameFinished && <NavLink to="/game/">New Game</NavLink>}
-    </div>
-  );
+    )
+  }
+  else {
+    return (
+      <div>
+        <h2>Public Race in Room: {room}</h2>
+        <br />
+        <h2>
+          {gameStarted
+            ? "Type!"
+            : countdownDisplay
+            ? `Race starting in: ${countdownDisplay}`
+            : "Getting game countdown..."}
+        </h2>
+        <div>
+          <h3>{thisPlayer.displayName}</h3>
+          <h3>
+            {finishedPlayers.includes(thisPlayer.email) &&
+              (finishedPlayers.indexOf(thisPlayer.email) === 0
+                ? `${finishedPlayers.indexOf(thisPlayer.email) + 1}st place!`
+                : finishedPlayers.indexOf(thisPlayer.email) === 1
+                ? `${finishedPlayers.indexOf(thisPlayer.email) + 1}nd place!`
+                : finishedPlayers.indexOf(thisPlayer.email === 2)
+                ? `${finishedPlayers.indexOf(thisPlayer.email) + 1}rd place!`
+                : `4th place!`)}
+          </h3>
+          {soloState && <p>Your stats will not be updated unless you play against another player!</p>}
+          <p>{wordsPerMinute} WPM</p>
+          <div>
+            <span id="correct-chars">{correctChars && correctChars}</span>
+            <span id="incorrect-chars">{incorrectChars && incorrectChars}</span>
+            <span id="next-char">{nextChar && nextChar}</span>
+            <span id="regular-chars">{regularChars && regularChars}</span>
+          </div>
+          <label htmlFor="userText">Type here:&nbsp;</label>
+          <input
+            id = "userText"
+            type="text"
+            autoComplete="off"
+            onPaste={handlePaste}
+            onKeyDown={handleKeyDown}
+            {...maxLength}
+          ></input>
+        </div>
+        {playerJSX && playerJSX}
+        {gameFinished && (
+          <NavLink to="/game/">
+            <button>New Game</button>
+          </NavLink>
+        )}
+      </div>
+    );
+  }
 }
 
 export default RacePublic;
