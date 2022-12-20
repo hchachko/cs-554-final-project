@@ -5,49 +5,46 @@ import "./styling.css";
 function NewGenreAndQuote() {
   const [allGenres, setAllGenres] = useState(null);
   const [selectedGenre, setSelectedGenre] = useState(null);
-  const [newQuote, setNewQuote] = useState('');
+  const [newQuote, setNewQuote] = useState("");
   const [newGenre, setNewGenre] = useState({});
-  const [updateMessage, setUpdateMessage] = useState('');
+  const [updateMessage, setUpdateMessage] = useState("");
 
   const handleNewQuote = (e) => {
     e.preventDefault();
-    setUpdateMessage('');
+    setUpdateMessage("");
     const { newQuote } = e.target.elements;
     if (newQuote.value.trim().length === 0) {
       alert("Must fill in quote");
       return false;
-    }
-    else if (newQuote.value.trim().length < 30) {
+    } else if (newQuote.value.trim().length < 30) {
       alert("Quotes must be at least 30 characters in length");
       return false;
     }
     setNewQuote(newQuote.value);
-  }
+  };
 
   const handleNewGenre = (e) => {
     e.preventDefault();
-    setUpdateMessage('');
+    setUpdateMessage("");
     const { newGenre, newGenreQuote } = e.target.elements;
     if (newGenre.value.trim().length === 0) {
       alert("Must fill in genre");
       return false;
-    }
-    else if (newGenreQuote.value.trim().length === 0) {
+    } else if (newGenreQuote.value.trim().length === 0) {
       alert("Must fill in genre quote");
       return false;
-    }
-    else if (newGenreQuote.value.trim().length < 30) {
+    } else if (newGenreQuote.value.trim().length < 30) {
       alert("Quotes must be at least 30 characters in legnth");
       return false;
     }
     setNewGenre({ genre: newGenre.value, quote: newGenreQuote.value });
-  }
+  };
 
   useEffect(() => {
     const handleMongo = async () => {
       try {
         const { data } = await axios.get(
-          "http://localhost:4000/genre/getGenres"
+          "https://cs554-final-project.herokuapp.com/genre/getGenres"
         );
         console.log("test ", data);
         setAllGenres(data);
@@ -62,13 +59,21 @@ function NewGenreAndQuote() {
   useEffect(() => {
     const handleMongo = async () => {
       try {
-        const { data } = await axios.post("http://localhost:4000/genre/newQuote", {
-          genre: selectedGenre,
-          newQuote: newQuote
-        });
+        const { data } = await axios.post(
+          "https://cs554-final-project.herokuapp.com/genre/newQuote",
+          {
+            genre: selectedGenre,
+            newQuote: newQuote,
+          }
+        );
         // for some reason these two lines below aren't hitting
-        console.log(`Successfully posted new quote to genre '${selectedGenre}'`, data);
-        setUpdateMessage(`Successfully posted new quote to genre '${selectedGenre}'`);
+        console.log(
+          `Successfully posted new quote to genre '${selectedGenre}'`,
+          data
+        );
+        setUpdateMessage(
+          `Successfully posted new quote to genre '${selectedGenre}'`
+        );
       } catch (e) {
         console.log(e);
       }
@@ -77,23 +82,26 @@ function NewGenreAndQuote() {
     if (newQuote.length > 0) {
       handleMongo();
     }
-  }, [newQuote])
+  }, [newQuote]);
 
   useEffect(() => {
     const handleMongo = async () => {
-      try { 
-        const { data } = await axios.post("http://localhost:4000/genre/newGenre", {
-          newGenre: newGenre.genre,
-          newGenreQuote: newGenre.quote
-        });
+      try {
+        const { data } = await axios.post(
+          "https://cs554-final-project.herokuapp.com/genre/newGenre",
+          {
+            newGenre: newGenre.genre,
+            newGenreQuote: newGenre.quote,
+          }
+        );
         // these ones as well
-        setAllGenres([ ...allGenres, newGenre.genre ]);
-        setUpdateMessage(`Successfully posted new genre '${newGenre.genre}`)
+        setAllGenres([...allGenres, newGenre.genre]);
+        setUpdateMessage(`Successfully posted new genre '${newGenre.genre}`);
         console.log(`Successfully posted new genre '${newGenre.genre}`);
       } catch (e) {
         console.log(e);
       }
-    }
+    };
 
     if (newGenre.genre && newGenre.quote) {
       handleMongo();
@@ -101,27 +109,38 @@ function NewGenreAndQuote() {
   }, [newGenre]);
 
   let i = 0;
-  const genreJSX = 
-  allGenres && 
-  allGenres.length > 0 &&
-  allGenres.map(genre => {
-    i++;
-    if (genre === selectedGenre) {
-      return (
-        <button key={i} className='selectedGenre' onClick={(e) => {
-          e.preventDefault();
-        }}>{genre}</button>
-      )
-    }
-    else {
-      return (
-        <button key={i} className='genre' onClick={(e) => {
-          e.preventDefault();
-          setSelectedGenre(genre);
-        }}>{genre}</button>
-      )
-    }
-  });
+  const genreJSX =
+    allGenres &&
+    allGenres.length > 0 &&
+    allGenres.map((genre) => {
+      i++;
+      if (genre === selectedGenre) {
+        return (
+          <button
+            key={i}
+            className="selectedGenre"
+            onClick={(e) => {
+              e.preventDefault();
+            }}
+          >
+            {genre}
+          </button>
+        );
+      } else {
+        return (
+          <button
+            key={i}
+            className="genre"
+            onClick={(e) => {
+              e.preventDefault();
+              setSelectedGenre(genre);
+            }}
+          >
+            {genre}
+          </button>
+        );
+      }
+    });
 
   return (
     <div>
@@ -131,32 +150,33 @@ function NewGenreAndQuote() {
         <div>
           <h3>Pick from an existing genre to add a quote to!</h3>
           <div>{genreJSX}</div>
-          {selectedGenre && 
-          <form onSubmit={handleNewQuote}>
-            <div>
-              <label>
-                Type Your New Quote Here:
-                <input
-                  required
-                  name="newQuote"
-                  type="text"
-                  placeholder="New Quote"
-                />
-              </label>
-            </div>
-            <button
-              id="newQuoteButton"
-              name="newQuoteButton"
-              type="submit"
-            >Submit New Quote</button>
-          </form>
-          }
+          {selectedGenre && (
+            <form onSubmit={handleNewQuote}>
+              <div>
+                <label>
+                  Type Your New Quote Here:
+                  <input
+                    required
+                    name="newQuote"
+                    type="text"
+                    placeholder="New Quote"
+                  />
+                </label>
+              </div>
+              <button id="newQuoteButton" name="newQuoteButton" type="submit">
+                Submit New Quote
+              </button>
+            </form>
+          )}
         </div>
       </div>
       <div>
         <h2>Create a new genre!</h2>
         <div>
-          <h3>Give a name for your new genre, as well as a fitting quote to start it off!</h3>
+          <h3>
+            Give a name for your new genre, as well as a fitting quote to start
+            it off!
+          </h3>
           <div>
             <form onSubmit={handleNewGenre}>
               <div>
@@ -181,17 +201,15 @@ function NewGenreAndQuote() {
                   />
                 </label>
               </div>
-              <button 
-                id="newGenreButton"
-                name="newGenreButton"
-                type="submit"
-              >Submit New Genre</button>
+              <button id="newGenreButton" name="newGenreButton" type="submit">
+                Submit New Genre
+              </button>
             </form>
           </div>
         </div>
       </div>
     </div>
-  )
-};
+  );
+}
 
 export default NewGenreAndQuote;

@@ -46,7 +46,7 @@ function RacePublic() {
 
   // useEffect for initial state setup upon joining room and handling disconnect
   useEffect(() => {
-    socket.current = io("http://localhost:4000");
+    socket.current = io("https://cs554-final-project.herokuapp.com");
 
     socket.current.emit(
       "join_public",
@@ -301,7 +301,7 @@ function RacePublic() {
         console.log("first");
         try {
           const { data } = await axios.patch(
-            "http://localhost:4000/user/userStats",
+            "https://cs554-final-project.herokuapp.com/user/userStats",
             {
               email: thisPlayer.email,
               game_wpm: wpm,
@@ -316,7 +316,7 @@ function RacePublic() {
         console.log("not first");
         try {
           const { data } = await axios.patch(
-            "http://localhost:4000/user/userStats",
+            "https://cs554-final-project.herokuapp.com/user/userStats",
             {
               email: thisPlayer.email,
               game_wpm: wpm,

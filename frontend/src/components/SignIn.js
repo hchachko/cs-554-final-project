@@ -14,7 +14,7 @@ function SignIn() {
   const handleLogin = async (event) => {
     event.preventDefault();
     let { email, password } = event.target.elements;
-    let url = "http://localhost:4000/user/" + email.value;
+    let url = "https://cs554-final-project.herokuapp.com/user/" + email.value;
     try {
       console.log(url);
       const { data } = await axios.get(url);
@@ -43,11 +43,14 @@ function SignIn() {
       if (currentUser) {
         if (currentUser._delegate.displayName) {
           try {
-            const { data } = await axios.post("http://localhost:4000/user", {
-              username: currentUser._delegate.displayName,
-              email: currentUser._delegate.email,
-              googleAuth: true,
-            });
+            const { data } = await axios.post(
+              "https://cs554-final-project.herokuapp.com/user",
+              {
+                username: currentUser._delegate.displayName,
+                email: currentUser._delegate.email,
+                googleAuth: true,
+              }
+            );
           } catch (e) {
             console.log(e);
           }

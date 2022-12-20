@@ -11,7 +11,7 @@ function RaceHome() {
     const handleMongo = async (e) => {
       try {
         const { data } = await axios.get(
-          "http://localhost:4000/genre/getGenres"
+          "https://cs554-final-project.herokuapp.com/genre/getGenres"
         );
         console.log("test ", data);
         setAllGenres(data);

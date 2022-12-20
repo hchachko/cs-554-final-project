@@ -37,7 +37,8 @@ function Account() {
         console.log("This username is: " + currentUser._delegate.email);
         try {
           const { data } = await axios.get(
-            "http://localhost:4000/user/" + currentUser._delegate.email
+            "https://cs554-final-project.herokuapp.com/user/" +
+              currentUser._delegate.email
           );
           setAccountData(data);
         } catch (e) {
@@ -48,7 +49,7 @@ function Account() {
     handleMongo();
   }, [currentUser]);
 
-  async function updateProfilePic (e) {
+  async function updateProfilePic(e) {
     try {
       e.preventDefault();
       let formData = new FormData();
@@ -61,7 +62,11 @@ function Account() {
           "Content-Type": "multipart/form-data",
         },
       };
-      const { data } = await axios.post("http://localhost:4000/user/profilePic", formData, config);
+      const { data } = await axios.post(
+        "https://cs554-final-project.herokuapp.com/user/profilePic",
+        formData,
+        config
+      );
       window.location.reload();
     } catch (e) {
       console.log(e);
@@ -92,36 +97,42 @@ function Account() {
           {accountData && accountData.profilePic && (
             <img
               src={
-                "http://localhost:4000/uploads/" +
+                "https://cs554-final-project.herokuapp.com/uploads/" +
                 accountData.profilePic.originalname
               }
               alt="Profile"
-              />
-            )}
-            {showForm && (
-              <div>
-                <form onSubmit={updateProfilePic}>
-                  <br/>
-                  <label htmlFor="uploadedImage" >Image URL:&nbsp;</label>
-                  <input
-                    onChange={(e) => handleChange(e)}
-                    id = 'uploadedImage'
-                    name = 'file'
-                    placeholder = 'Image link...'
-                    type="file"
-                    accept="image/*"
-                    required
-                  />
-                  <br/>
-                  <br/>
-                  <button type="Submit">Confirm</button>
-                  <button type="Button" onClick={ProfilePicButtonChange}>Cancel</button>
-                <br/>
+            />
+          )}
+          {showForm && (
+            <div>
+              <form onSubmit={updateProfilePic}>
+                <br />
+                <label htmlFor="uploadedImage">Image URL:&nbsp;</label>
+                <input
+                  onChange={(e) => handleChange(e)}
+                  id="uploadedImage"
+                  name="file"
+                  placeholder="Image link..."
+                  type="file"
+                  accept="image/*"
+                  required
+                />
+                <br />
+                <br />
+                <button type="Submit">Confirm</button>
+                <button type="Button" onClick={ProfilePicButtonChange}>
+                  Cancel
+                </button>
+                <br />
               </form>
-              </div>
-            ) }
-            <br/>
-          {!showForm && <button onClick={ProfilePicButtonChange}>Upload Profile Picture</button>}
+            </div>
+          )}
+          <br />
+          {!showForm && (
+            <button onClick={ProfilePicButtonChange}>
+              Upload Profile Picture
+            </button>
+          )}
           <Typography variant="body2" color="text.secondary">
             Email: {currentUser._delegate.email}
           </Typography>
@@ -129,22 +140,19 @@ function Account() {
         <SignOutButton className={classes.button} />
       </Card>
       <Card className={classes.card} variant="outlined">
-          <CardContent>
-            <Typography gutterBottom variant="h6" component="div">
-              User Stats
-            </Typography>
-            {accountData && (
-              <ul>
-                <li>Games Played: {accountData.games_played}</li>
-                <li>
-                  WPM (Words Per Minute):{" "}
-                  {accountData.wpm}
-                </li>
-                <li>Games Won: {accountData.games_won}</li>
-              </ul>
-            )}
-          </CardContent>
-        </Card>
+        <CardContent>
+          <Typography gutterBottom variant="h6" component="div">
+            User Stats
+          </Typography>
+          {accountData && (
+            <ul>
+              <li>Games Played: {accountData.games_played}</li>
+              <li>WPM (Words Per Minute): {accountData.wpm}</li>
+              <li>Games Won: {accountData.games_won}</li>
+            </ul>
+          )}
+        </CardContent>
+      </Card>
     </Grid>
   );
 }

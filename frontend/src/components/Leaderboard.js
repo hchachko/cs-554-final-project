@@ -36,7 +36,7 @@ function Leaderboard() {
     const handleMongo = async (e) => {
       try {
         const { data } = await axios.get(
-          "http://localhost:4000/user/leaderboard"
+          "https://cs554-final-project.herokuapp.com/user/leaderboard"
         );
         console.log("test ", data);
         setLeaderboardData(data);
