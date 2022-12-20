@@ -125,10 +125,10 @@ async function updateProfilePic(file, email, fileName) {
     { email: email },
     { $set: newProfilePic }
   );
-
-  if (updatedData.modifiedCount == 0) {
+  //TODO make it so uploading the same image doesn't error out
+  /*if (updatedData.modifiedCount == 0) {
     throw "Error: User update was unsuccessful.";
-  }
+  }*/
 }
 
 async function updateStats(email, game_wpm, game_won) {

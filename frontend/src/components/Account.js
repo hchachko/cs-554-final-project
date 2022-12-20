@@ -48,8 +48,9 @@ function Account() {
     handleMongo();
   }, [currentUser]);
 
-  async function updateProfilePic () {
+  async function updateProfilePic (e) {
     try {
+      e.preventDefault();
       let formData = new FormData();
       formData.append('file', fileData);
       formData.append('fileName', fileData.name);
@@ -60,26 +61,23 @@ function Account() {
             'Content-Type': 'multipart/form-data'
         }
       };
-      const { data } = await axios.post("http://localhost:4000/user/profilePic", formData,
-      config);
+      const { data } = await axios.post("http://localhost:4000/user/profilePic", formData, config);
+      window.location.reload();
     } catch (e) {
       console.log(e);
     }
   }
 
   const classes = useStyles();
-  const [buttonValue, setButtonValue] = useState("Edit Profile Pic");
   const [showForm, setShowForm] = useState(false);
   const [fileData, setFileData] = useState({imageURL: ''});
   const handleChange = (e) => {
     setFileData(e.target.files[0]);
   };
   function ProfilePicButtonChange() {
-    if (buttonValue === "Edit Profile Pic") {
-      setButtonValue("Cancel");
+    if (showForm === false) {
       setShowForm(true);
     } else {
-      setButtonValue("Edit Profile Pic");
       setShowForm(false);
     }
   }
@@ -99,7 +97,7 @@ function Account() {
             )}
             {showForm && (
               <div>
-                
+                <form onSubmit={updateProfilePic}>
                   <br/>
                   <label>Image URL:&nbsp;</label>
                   <input
@@ -109,16 +107,18 @@ function Account() {
                     placeholder = 'Image link...'
                     type="file"
                     accept="image/*"
+                    required
                   />
                   <br/>
                   <br/>
-                  <button onClick={updateProfilePic}>Confirm</button>
-                  <button onClick={ProfilePicButtonChange}>{buttonValue}</button>
-
-              <br/>
+                  <button type="Submit">Confirm</button>
+                  <button type="Button" onClick={ProfilePicButtonChange}>Cancel</button>
+                <br/>
+              </form>
               </div>
             ) }
-          {!showForm && (<div><button onClick={ProfilePicButtonChange}>{buttonValue}</button></div>)}
+            <br/>
+          {!showForm && <button onClick={ProfilePicButtonChange}>Upload Profile Picture</button>}
           <Typography variant="body2" color="text.secondary">
             Email: {currentUser._delegate.email}
           </Typography>
