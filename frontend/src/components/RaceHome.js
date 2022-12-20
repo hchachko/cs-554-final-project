@@ -1,6 +1,6 @@
-import {Link} from 'react-router-dom';
+import { Link } from "react-router-dom";
 import React, { useState, useEffect } from "react";
-import axios from 'axios';
+import axios from "axios";
 import "./styling.css";
 
 function RaceHome() {
@@ -24,27 +24,38 @@ function RaceHome() {
   }, []);
 
   let i = 0;
-  const genreJSX = 
-  allGenres && 
-  allGenres.length > 0 &&
-  allGenres.map(genre => {
-    i++;
-    if (genre === selectedGenre) {
-      return (
-        <button key={i} className='selectedGenre' onClick={(e) => {
-          e.preventDefault();
-        }}>{genre}</button>
-      )
-    }
-    else {
-      return (
-        <button key={i} className='genre' onClick={(e) => {
-          e.preventDefault();
-          setSelectedGenre(genre);
-        }}>{genre}</button>
-      )
-    }
-  });
+  const genreJSX =
+    allGenres &&
+    allGenres.length > 0 &&
+    allGenres.map((genre) => {
+      i++;
+      if (genre === selectedGenre) {
+        return (
+          <button
+            key={i}
+            className="selectedGenre"
+            onClick={(e) => {
+              e.preventDefault();
+            }}
+          >
+            {genre}
+          </button>
+        );
+      } else {
+        return (
+          <button
+            key={i}
+            className="genre"
+            onClick={(e) => {
+              e.preventDefault();
+              setSelectedGenre(genre);
+            }}
+          >
+            {genre}
+          </button>
+        );
+      }
+    });
 
   return (
     <div className="home-card">
@@ -56,17 +67,16 @@ function RaceHome() {
       <div>
         <h3>Public Match</h3>
         <p>Play against other random players on the site's server!</p>
-        {selectedGenre 
-        ? 
-        <Link to='/game/public' state={{ genre: selectedGenre }}>
+        {selectedGenre ? (
+          <Link to="/game/public" state={{ genre: selectedGenre }}>
+            Public Match
+          </Link>
+        ) : (
           <button>Public Match</button>
-        </Link>
-        :
-        <button>Public Match</button>
-        }
+        )}
       </div>
     </div>
-  )
+  );
 }
 
 export default RaceHome;
