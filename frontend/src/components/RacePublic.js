@@ -1,13 +1,15 @@
-import React, { useEffect, useState, useRef, useContext } from "react";
-import { NavLink } from "react-router-dom";
+import React, { useEffect, useState, useRef, useContext} from "react";
+import { NavLink, useLocation } from "react-router-dom";
 import io from "socket.io-client";
 import { AuthContext } from "../firebase/Auth";
-import { v4 } from "uuid";
 import axios from "axios";
 import useInterval from './useInterval';
 
 function RacePublic() {
   const { currentUser } = useContext(AuthContext);
+
+  const location = useLocation();
+  const { genre } = location.state;
 
   const [thisPlayer, setThisPlayer] = useState({displayName: currentUser._delegate.displayName, email: currentUser._delegate.email}); // Your player
   const [room, setRoom] = useState(""); // Use for telling the server who to send your real-time typing progress to (the rest of the room)
@@ -43,7 +45,7 @@ function RacePublic() {
   useEffect(() => {
     socket.current = io("http://localhost:4000");
 
-    socket.current.emit("join_public", thisPlayer.displayName, thisPlayer.email);
+    socket.current.emit("join_public", thisPlayer.displayName, thisPlayer.email, genre);
 
     socket.current.on("joined", (existingPlayers, room, quote) => {
       // response from this client joining the lobby
@@ -124,7 +126,7 @@ function RacePublic() {
       socket.current.off("player_left");
       socket.current.off("countdown");
     };
-  }, [players]);
+  }, [players, gameStarted]);
 
   // useEffect for displaying/decrementing countdown
   useEffect(() => {
@@ -482,10 +484,11 @@ function RacePublic() {
           <span id="next-char">{nextChar && nextChar}</span>
           <span id="regular-chars">{regularChars && regularChars}</span>
         </div>
-        <label for="userText">Type here:&nbsp;</label>
+        <label htmlFor="userText">Type here:&nbsp;</label>
         <input
           id = "userText"
           type="text"
+          autoComplete="off"
           onPaste={handlePaste}
           onKeyDown={handleKeyDown}
           {...maxLength}

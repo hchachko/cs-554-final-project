@@ -37,6 +37,12 @@ const NavigationAuth = () => {
         >
           Leaderboard
         </NavLink>
+        <NavLink
+          to="/genre"
+          className={({ isActive }) => (isActive ? "navLinkActive" : "navLink")}
+        >
+          Create Genres & Quotes
+        </NavLink>
       </nav>
     </header>
   );

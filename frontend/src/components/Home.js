@@ -15,19 +15,11 @@ function Home() {
       {/* Give each home-card div it's own section - one for public/private matchmaking, one for logging in/signing up, one for creating new quotes/"universes" */}
       {currentUser && (
         <div className="home-card">
-          <h2>Find a game!</h2>
           <div>
-            <h3>Public Match</h3>
-            <p>Play against other random players on the site's server!</p>
-            <Link to="/game/public">
-              <button>Public Match</button>
-            </Link>
-          </div>
-          <div>
-            <h3>Private Match</h3>
-            <p>Play against your friends in private lobbies!</p>
-            <Link to="/game/private">
-              <button>Private Match</button>
+            <h2>Find a game!</h2>
+            <p>Play against other players on the site's server!</p>
+            <Link to="/game/">
+              <button>Play</button>
             </Link>
           </div>
         </div>

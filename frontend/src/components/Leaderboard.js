@@ -53,7 +53,7 @@ function Leaderboard() {
       <Card className={classes.card} variant="outlined">
         <CardContent>
           <Typography gutterBottom variant="h5" component="div">
-            CPM Leaderboard
+            WPM Leaderboard
           </Typography>
           <ol>
             {leaderboardData.map((user) => {

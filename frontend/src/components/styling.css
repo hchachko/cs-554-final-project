@@ -42,3 +42,11 @@
 #regular-chars {
     color: black;
 }
+
+.genre {
+    border: 2px solid black;
+}
+
+.selectedGenre {
+    border: 2px solid green;
+}
