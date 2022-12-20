@@ -60,10 +60,11 @@ function Leaderboard() {
               return (
                 <div>
                   <li>{user.username}</li>
-                  CPM: {Math.round(user.wpm * 100) / 100}
+                  WPM (Words Per Minute): {user.wpm}
                   <br />
                   Games Played: {user.games_played}
                   <br />
+                  Games Won: {user.games_won}
                   <br />
                 </div>
               );

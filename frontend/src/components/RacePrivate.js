@@ -3,7 +3,7 @@
 function RacePrivate() {
     return (
         <div>
-            private race
+            Private races are not yet implemented! This is a feature to be done in the future.
         </div>
     )
 }

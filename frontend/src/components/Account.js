@@ -135,8 +135,8 @@ function Account() {
               <ul>
                 <li>Games Played: {accountData.games_played}</li>
                 <li>
-                  Characters Per Second (CPM):{" "}
-                  {Math.round(accountData.wpm * 100) / 100}
+                  WPM (Words Per Minute):{" "}
+                  {accountData.wpm}
                 </li>
                 <li>Games Won: {accountData.games_won}</li>
               </ul>

@@ -85,7 +85,7 @@ router.patch("/userStats", async (req, res) => {
   console.log("it's working!", req.body.email);
   const getUserData = req.body;
   let email = getUserData.email;
-  let game_wpm = getUserData.game_wpm;
+  let game_wpm = Number(getUserData.game_wpm);
   let game_won = getUserData.game_won;
   try {
     updatedStats = await usersData.updateStats(email, game_wpm, game_won);

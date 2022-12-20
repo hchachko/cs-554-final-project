@@ -4,9 +4,12 @@ import io from "socket.io-client";
 import { AuthContext } from "../firebase/Auth";
 import { v4 } from "uuid";
 import axios from "axios";
+import useInterval from './useInterval';
 
 function RacePublic() {
-  const [playerName, setPlayerName] = useState(`${v4()}`); // Your player
+  const { currentUser } = useContext(AuthContext);
+
+  const [thisPlayer, setThisPlayer] = useState({displayName: currentUser._delegate.displayName, email: currentUser._delegate.email}); // Your player
   const [room, setRoom] = useState(""); // Use for telling the server who to send your real-time typing progress to (the rest of the room)
   const [players, setPlayers] = useState([]); // Other players
   const [finishedPlayers, setFinishedPlayers] = useState([]);
@@ -25,48 +28,22 @@ function RacePublic() {
   const [regularChars, setRegularChars] = useState("");
   const [opponentInput, setOpponentInput] = useState([]);
   const [indexOfLastEmit, setIndexOfLastEmit] = useState(0);
+  const [numCorrect, setNumCorrect] = useState(0);
+  const [numIncorrect, setNumIncorrect] = useState(0);
+  const [wordsPerMinute, setWordsPerMinute] = useState(0);
+  const [oppWordsPerMinute, setOppWordsPerMinute] = useState([]); // words per minute of other players to display
   const [isActive, setIsActive] = useState(false);
   const [isPaused, setIsPaused] = useState(true);
   const [time, setTime] = useState(0);
-  const { currentUser } = useContext(AuthContext);
+  const [haveNotPostedStats, setHaveNotPosetdStats] = useState(true);
 
   const socket = useRef();
-
-  //Timer to calculate wpm
-  useEffect(() => {
-    let interval = null;
-
-    if (isActive && isPaused === false) {
-      interval = setInterval(() => {
-        setTime((time) => time + 10);
-      }, 10);
-    } else {
-      clearInterval(interval);
-    }
-    return () => {
-      clearInterval(interval);
-    };
-  }, [isActive, isPaused]);
-
-  const handleStart = () => {
-    setIsActive(true);
-    setIsPaused(false);
-  };
-
-  const handlePauseResume = () => {
-    setIsPaused(!isPaused);
-  };
-
-  const handleReset = () => {
-    setIsActive(false);
-    setTime(0);
-  };
 
   // useEffect for initial state setup upon joining room and handling disconnect
   useEffect(() => {
     socket.current = io("http://localhost:4000");
 
-    socket.current.emit("join_public", playerName);
+    socket.current.emit("join_public", thisPlayer.displayName, thisPlayer.email);
 
     socket.current.on("joined", (existingPlayers, room, quote) => {
       // response from this client joining the lobby
@@ -79,15 +56,18 @@ function RacePublic() {
       setRegularChars(quote.slice(1));
       if (existingPlayers.length > 0) {
         setPlayers([...existingPlayers]);
-        let emptyObjects = [];
+        let opponentInputObjects = [];
+        let opponentWpm = [];
         for (let i = 0; i < existingPlayers.length; i++) {
-          emptyObjects.push({
+          opponentInputObjects.push({
             correctChars: "",
             incorrectChars: "",
             regularChars: quote,
           });
+          opponentWpm.push(0);
         }
-        setOpponentInput([...emptyObjects]);
+        setOpponentInput([...opponentInputObjects ]);
+        setOppWordsPerMinute([ ...opponentWpm ]);
         setSoloState(false);
       }
       setRoom(room);
@@ -108,7 +88,7 @@ function RacePublic() {
 
     socket.current.on("new_player_joined", (newPlayer, quote) => {
       // response of other clients joining after this client
-      console.log(`New Player Joined: ${newPlayer.name}`);
+      console.log(`New Player Joined - displayName: ${newPlayer.displayName}, email: ${newPlayer.email}`);
       if (soloState === true) {
         setSoloState(false);
       }
@@ -117,6 +97,7 @@ function RacePublic() {
         ...opponentInput,
         { correctChars: "", incorrectChars: "", regularChars: quote },
       ]);
+      setOppWordsPerMinute([ ...oppWordsPerMinute, 0 ]);
     });
 
     socket.current.on("player_left", (playerSocket) => {
@@ -133,6 +114,9 @@ function RacePublic() {
       let copyOpponentInput = [...opponentInput];
       copyOpponentInput.splice(leavingPlayerIndex, 1);
       setOpponentInput(copyOpponentInput);
+      let copyOppWpm = [...oppWordsPerMinute];
+      copyOppWpm.splice(leavingPlayerIndex, 1);
+      setOppWordsPerMinute(copyOppWpm);
     });
 
     return () => {
@@ -172,6 +156,8 @@ function RacePublic() {
     function runUseEffect() {
       let i = inputIndex;
       let csf = charsSinceFalse;
+      let nc = numCorrect;
+      let nic = numIncorrect;
       if (csf === 0) {
         // check changes before any incorrect characters
         if (i < raceInput.length) {
@@ -181,10 +167,13 @@ function RacePublic() {
             setNextChar(raceQuote[i + 1]);
             setRegularChars(regularChars.slice(1));
             setCorrectChars(correctChars + raceQuote[i]);
+            if (i === nc) {
+              setNumCorrect(nc + 1);
+            }
             if (raceQuote[i] === " " && i > indexOfLastEmit) {
               socket.current.emit(
                 "new_input",
-                playerName,
+                thisPlayer.email,
                 room,
                 i - indexOfLastEmit
               );
@@ -194,7 +183,7 @@ function RacePublic() {
               console.log("race finished");
               socket.current.emit(
                 "new_input",
-                playerName,
+                thisPlayer.email,
                 room,
                 i - indexOfLastEmit + 1
               );
@@ -206,6 +195,7 @@ function RacePublic() {
             setNextChar(raceQuote[i + 1]);
             setRegularChars(regularChars.slice(1));
             setIncorrectChars(incorrectChars + raceQuote[i]);
+            setNumIncorrect(nic + 1);
           }
           setInputIndex(i + 1);
         } else {
@@ -234,6 +224,7 @@ function RacePublic() {
           setNextChar(raceQuote[i + 1]);
           setRegularChars(regularChars.slice(1));
           setIncorrectChars(incorrectChars + raceQuote[i]);
+          setNumIncorrect(nic + 1);
           setInputIndex(i + 1);
         }
       }
@@ -246,8 +237,8 @@ function RacePublic() {
 
   // useEffect for receiving other players' race input
   useEffect(() => {
-    socket.current.on("opponent_input", (player, wordLength) => {
-      let oppIndex = players.findIndex((p) => p.name === player);
+    socket.current.on("opponent_input", (playerEmail, wordLength) => {
+      let oppIndex = players.findIndex((p) => p.email === playerEmail);
       let copyOppInput = [...opponentInput];
       let modifiedInput = copyOppInput[oppIndex];
 
@@ -271,66 +262,126 @@ function RacePublic() {
     //timer stop
     handlePauseResume();
     function runUseEffect() {
-      socket.current.emit("game_finish", playerName, room);
+      socket.current.emit("game_finish", thisPlayer.email, room);
     }
 
     if (gameFinished) {
       runUseEffect();
     }
-
-    if (raceQuote) {
-      console.log("This is skiddy speaking", time);
-      console.log(raceQuote.length);
-    }
-
-    //function for updating stats of player
-    const handleStats = async (e) => {
-      if (raceQuote) {
-        if (
-          finishedPlayers.includes(currentUser._delegate.displayName) &&
-          finishedPlayers.indexOf(currentUser._delegate.displayName) === 0
-        ) {
-          try {
-            const { data } = await axios.patch(
-              "http://localhost:4000/user/userStats",
-              {
-                email: currentUser._delegate.email,
-                game_wpm: raceQuote.length / (time / 1000),
-                game_won: true,
-              }
-            );
-          } catch (e) {
-            console.log(e);
-          }
-        } else {
-          try {
-            const { data } = await axios.patch(
-              "http://localhost:4000/user/userStats",
-              {
-                email: currentUser._delegate.email,
-                game_wpm: raceQuote.length / (time / 1000),
-                game_won: false,
-              }
-            );
-          } catch (e) {
-            console.log(e);
-          }
-        }
-      }
-    };
-    handleStats();
   }, [gameFinished]);
 
   // useEffect for listening in on player's finishing their race in order to get the place with which they finished
   useEffect(() => {
-    socket.current.on("race_place", (playerName) => {
-      setFinishedPlayers([...finishedPlayers, playerName]);
+    const handleStats = async (e) => {
+      //function for updating stats of player
+      let accuracy = numCorrect / (numCorrect + numIncorrect);
+      let adjustedNumCorrect = numCorrect * accuracy;
+      let numberOfWords = adjustedNumCorrect / 5;
+      let wpm =  (numberOfWords / (time / 60000)).toFixed(2);
+      if (isNaN(wpm)) { wpm = 0 }
+      socket.current.emit("send_wpm", thisPlayer.email, room, wpm);
+      setWordsPerMinute(wpm);
+      if (
+        finishedPlayers.includes(thisPlayer.email) &&
+        finishedPlayers.indexOf(thisPlayer.email) === 0
+      ) {
+        console.log('first');
+        try {
+          const { data } = await axios.patch(
+            "http://localhost:4000/user/userStats",
+            {
+              email: thisPlayer.email,
+              game_wpm: wpm,
+              game_won: true,
+            }
+          );
+          setHaveNotPosetdStats(false);
+        } catch (e) {
+          console.log(e);
+        }
+      } else {
+        console.log('not first');
+        try {
+          const { data } = await axios.patch(
+            "http://localhost:4000/user/userStats",
+            {
+              email: thisPlayer.email,
+              game_wpm: wpm,
+              game_won: false,
+            }
+          );
+        } catch (e) {
+          console.log(e);
+        }
+      }
+    };
+
+    if (!soloState && haveNotPostedStats && gameFinished) {
+      handleStats();
+    }
+
+    socket.current.on("race_place", (playerEmail) => {
+      setFinishedPlayers([ ...finishedPlayers, playerEmail ]);
     });
 
     return () => {
       socket.current.off("race_place");
     };
   }, [finishedPlayers]);
+
+  // useEffect for receiving and updating words per minute from other clients
+  useEffect(() => {
+    socket.current.on("receive_wpm", (playerEmail, wpm) => {
+      let oppIndex = players.findIndex((p) => p.email === playerEmail);
+      let copyOppWpm = [ ...oppWordsPerMinute ];
+      copyOppWpm[oppIndex] = wpm;
+      setOppWordsPerMinute(copyOppWpm);
+    });
+    
+    return () => {
+      socket.current.off('receive_wpm');
+    }
+  }, [oppWordsPerMinute]);
+
+  //Timer to keep track of time for wpm
+  useEffect(() => {
+    let interval = null;
+
+    if (isActive && isPaused === false) {
+      interval = setInterval(() => {
+        setTime((time) => time + 10);
+      }, 10);
+    } else {
+      clearInterval(interval);
+    }
+    return () => {
+      clearInterval(interval);
+    };
+  }, [isActive, isPaused]);
+
+  useInterval(() => {
+    let accuracy = numCorrect / (numCorrect + numIncorrect);
+    let adjustedNumCorrect = numCorrect * accuracy;
+    let numberOfWords = adjustedNumCorrect / 5;
+    let wpm =  (numberOfWords / (time / 60000)).toFixed(2);
+    if (isNaN(wpm)) { wpm = 0 }
+    socket.current.emit("send_wpm", thisPlayer.email, room, wpm);
+    setWordsPerMinute(wpm);
+  }, isActive && !isPaused ? 3000 : null);
+
+  const handleStart = () => {
+    setIsActive(true);
+    setIsPaused(false);
+  };
+
+  const handlePauseResume = () => {
+    setIsPaused(!isPaused);
+  };
+
+  const handleReset = () => {
+    setIsActive(false);
+    setTime(0);
+  };
 
   // current placein for organizing players in the lobby on frontend - will adjust to reflect proper styling when we get there
   let i = 0;
@@ -341,17 +392,18 @@ function RacePublic() {
       i++;
       return (
         <div key={i}>
-          <h3>{p.name}</h3>
+          <h3>{p.displayName}</h3>
           <h3>
-            {finishedPlayers.includes(p.name) &&
-              (finishedPlayers.indexOf(p.name) === 0
-                ? `${finishedPlayers.indexOf(p.name) + 1}st place!`
-                : finishedPlayers.indexOf(p.name) === 1
-                ? `${finishedPlayers.indexOf(p.name) + 1}nd place!`
-                : finishedPlayers.indexOf(p.name === 2)
-                ? `${finishedPlayers.indexOf(p.name) + 1}rd place!`
+            {finishedPlayers.includes(p.email) &&
+              (finishedPlayers.indexOf(p.email) === 0
+                ? `${finishedPlayers.indexOf(p.email) + 1}st place!`
+                : finishedPlayers.indexOf(p.email) === 1
+                ? `${finishedPlayers.indexOf(p.email) + 1}nd place!`
+                : finishedPlayers.indexOf(p.email === 2)
+                ? `${finishedPlayers.indexOf(p.email) + 1}rd place!`
                 : `4th place!`)}
           </h3>
+          <p>{oppWordsPerMinute[i - 1]} WPM</p>
           <div>
             <span id="correct-chars">
               {opponentInput[i - 1].correctChars &&
@@ -411,17 +463,19 @@ function RacePublic() {
           : "Getting game countdown..."}
       </h2>
       <div>
-        <h3>{playerName}</h3>
+        <h3>{thisPlayer.displayName}</h3>
         <h3>
-          {finishedPlayers.includes(playerName) &&
-            (finishedPlayers.indexOf(playerName) === 0
-              ? `${finishedPlayers.indexOf(playerName) + 1}st place!`
-              : finishedPlayers.indexOf(playerName) === 1
-              ? `${finishedPlayers.indexOf(playerName) + 1}nd place!`
-              : finishedPlayers.indexOf(playerName === 2)
-              ? `${finishedPlayers.indexOf(playerName) + 1}rd place!`
+          {finishedPlayers.includes(thisPlayer.email) &&
+            (finishedPlayers.indexOf(thisPlayer.email) === 0
+              ? `${finishedPlayers.indexOf(thisPlayer.email) + 1}st place!`
+              : finishedPlayers.indexOf(thisPlayer.email) === 1
+              ? `${finishedPlayers.indexOf(thisPlayer.email) + 1}nd place!`
+              : finishedPlayers.indexOf(thisPlayer.email === 2)
+              ? `${finishedPlayers.indexOf(thisPlayer.email) + 1}rd place!`
               : `4th place!`)}
         </h3>
+        {soloState && <p>Your stats will not be updated unless you play against another player!</p>}
+        <p>{wordsPerMinute} WPM</p>
         <div>
           <span id="correct-chars">{correctChars && correctChars}</span>
           <span id="incorrect-chars">{incorrectChars && incorrectChars}</span>
