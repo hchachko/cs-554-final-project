@@ -112,9 +112,6 @@ async function updateProfilePic(file, email, fileName) {
   const userExists = await usersCollection.findOne({
     email: email,
   });
-  //TODO make sure the image is being properly stored in mongo then try rendering it via a get call
-  //You can test this by uploading an image to the account page, then the oputput  (resized by image magick) will appear in the uploads folder in the backend
-  //TY Bemin :)
   let oldProfilePic = userExists.file;
   if (oldProfilePic == file) return "No changes needed!";
   const newProfilePic = {
@@ -190,6 +187,8 @@ async function getTopUsers() {
       games_won: element.games_won,
     });
   });
+
+  console.log("FARTY POOP", topUsers);
 
   return topUsers;
 }

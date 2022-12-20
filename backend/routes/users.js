@@ -18,6 +18,7 @@ router.get("/leaderboard", async (req, res) => {
 router.get("/:email", async (req, res) => {
   //console.log("gizzard");
   //console.log(req.params);
+
   if (!req.params.email) {
     res.status(400).json({ error: "email needed" });
     return;
@@ -94,6 +95,5 @@ router.patch("/userStats", async (req, res) => {
     console.log(e);
   }
 });
-
 
 module.exports = router;

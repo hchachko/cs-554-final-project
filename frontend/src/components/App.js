@@ -11,7 +11,7 @@ import SignIn from "./SignIn";
 import Leaderboard from "./Leaderboard";
 import Account from "./Account";
 import Navigation from "./Navigation";
-import { BrowserRouter as Router, Route, Routes } from "react-router-dom";
+import { HashRouter as Router, Route, Routes } from "react-router-dom";
 import { AuthProvider } from "../firebase/Auth";
 
 function App() {

@@ -1,7 +1,8 @@
 const MongoClient = require("mongodb").MongoClient;
 const settings = {
   mongoConfig: {
-    serverUrl: "mongodb://127.0.0.1/",
+    serverUrl:
+      "mongodb+srv://cs554:CS554Project@cluster0.knbyoys.mongodb.net/?retryWrites=true&w=majority",
     database: "CS554-Final-Project",
   },
 };

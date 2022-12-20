@@ -14,6 +14,10 @@ const path = require("path");
 app.use(bp.urlencoded({ extended: true }));
 //app.options('*', cors())
 app.use(cors());
+app.use(express.static(path.join(__dirname, "build")));
+app.get("/*", (req, res) => {
+  res.sendFile(path.join(__dirname, "/build"));
+});
 const server = http.createServer(app);
 let corsOptions = {
   origin: ["*"],
@@ -54,11 +58,9 @@ app.post("/user/profilePic", upload.single("file"), async (req, res) => {
     250
   );
   if (!req.body.email || !req.body.fileName || req.body.file) {
-    res
-      .status(400)
-      .json({
-        error: "You must supply a email, filename, and profile picture",
-      });
+    res.status(400).json({
+      error: "You must supply a email, filename, and profile picture",
+    });
     return;
   }
   let email = req.body.email;
@@ -85,7 +87,7 @@ app.post("/user/profilePic", upload.single("file"), async (req, res) => {
 
 configRoutes(app);
 
-server.listen(4000, () => {
+server.listen(process.env.PORT || 4000, () => {
   console.log(`backend listening on *:${4000}`);
 });
 
