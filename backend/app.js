@@ -5,6 +5,7 @@ const { Server } = require("socket.io");
 const http = require("http");
 const { v4 } = require("uuid");
 const configRoutes = require("./routes");
+const axios = require("axios");
 const bp = require("body-parser");
 app.use(bp.json());
 const multer = require("multer");
@@ -25,7 +26,7 @@ let corsOptions = {
 
 const io = new Server(server, {
   cors: {
-    origin: ["*"], //http://localhost:3000
+    origin: "https://cs554-final-project.herokuapp.com",
   },
 });
 
@@ -91,12 +92,12 @@ server.listen(process.env.PORT || 4000, () => {
   console.log(`backend listening on *:${4000}`);
 });
 
-// public rooms for now, possibly adding private rooms later if it's not too much of a hassle
+// public rooms
 let rooms = [];
 /*  room structure 
     {
         id: The string of a UUID of the room to be used for emitting data to room participants,
-        players: [ { name, socketId } ]  The names of all players currently in the room, for sending to all clients to display,
+        players: [ { name, email, socketId } ]  The names/emails/socketId's of all players in the room, used for displaying names and logic in sending info between clients/posting stat changes to the database
         playerCount: The Number of players currently in the room, used for gauging when rooms are full or not (currently full at 4 players)
         inProgess: Boolean that determines whether current room's game is in progress and whether it's joinable
         quote: String of quote that racers will be typing. Pull random quote from database upon room's creation
@@ -107,19 +108,23 @@ let rooms = [];
 io.on("connection", (socket) => {
   console.log("new client connected: ", socket.id);
 
-  socket.on("join_public", (playerName) => {
+  socket.on("join_public", async (playerName, playerEmail, genre) => {
     if (rooms.length > 0) {
       // if there are already public rooms, hit this condition to join one
       let allRoomsFull = true;
       for (let i = 0; i < rooms.length; i++) {
-        if (rooms[i].inProgress || rooms[i].playerCount === 4) {
+        if (
+          rooms[i].genre !== genre ||
+          rooms[i].inProgress ||
+          rooms[i].playerCount === 4
+        ) {
           continue;
         }
         // if there are any rooms with space, join it
         rooms[i].playerCount++;
         rooms[i].players = [
           ...rooms[i].players,
-          { name: playerName, socketId: socket.id },
+          { displayName: playerName, email: playerEmail, socketId: socket.id },
         ];
         socket.join(rooms[i].id);
         socket.emit(
@@ -142,12 +147,35 @@ io.on("connection", (socket) => {
 
       if (allRoomsFull === true) {
         // all rooms are full, create a new one
+        // grab random quote from database using genre
+        let quote;
+        const grabQuote = async (e) => {
+          try {
+            const { data } = await axios.get(
+              "https://cs554-final-project.herokuapp.com/genre/getQuote/" +
+                genre
+            );
+            console.log("quote: " + data);
+            quote = data;
+          } catch (e) {
+            console.log(e);
+          }
+        };
+        await grabQuote();
+
         let room = {
           id: `${v4()}`,
-          players: [{ name: playerName, socketId: socket.id }],
+          players: [
+            {
+              displayName: playerName,
+              email: playerEmail,
+              socketId: socket.id,
+            },
+          ],
           playerCount: 1,
           inProgress: false,
-          quote: `A day may come, when the courage of men fails, when we forsake our friends and break all bonds of Fellowship, but it is not this day! An hour of wolves and shattered shields when the age of men comes crashing down! But it is not this day!`,
+          genre: genre,
+          quote: quote,
         };
         rooms.push(room);
         socket.join(room.id);
@@ -156,12 +184,30 @@ io.on("connection", (socket) => {
       }
     } else {
       // create new room if there aren't any to join
+      // grab random quote from database using genre
+      let quote;
+      const grabQuote = async (e) => {
+        try {
+          const { data } = await axios.get(
+            "https://cs554-final-project.herokuapp.com/genre/getQuote/" + genre
+          );
+          console.log("quote: " + data);
+          quote = data;
+        } catch (e) {
+          console.log(e);
+        }
+      };
+      await grabQuote();
+
       let room = {
         id: `${v4()}`,
-        players: [{ name: playerName, socketId: socket.id }],
+        players: [
+          { displayName: playerName, email: playerEmail, socketId: socket.id },
+        ],
         playerCount: 1,
         inProgress: false,
-        quote: `A day may come, when the courage of men fails, when we forsake our friends and break all bonds of Fellowship, but it is not this day! An hour of wolves and shattered shields when the age of men comes crashing down! But it is not this day!`,
+        genre: genre,
+        quote: quote,
       };
       rooms.push(room);
       socket.join(room.id);
@@ -182,13 +228,17 @@ io.on("connection", (socket) => {
   });
 
   // hits whenever a player makes a successful input - relays the input back to all other clients
-  socket.on("new_input", (playerName, room, wordLength) => {
-    socket.to(room).emit("opponent_input", playerName, wordLength);
+  socket.on("new_input", (playerEmail, room, wordLength) => {
+    socket.to(room).emit("opponent_input", playerEmail, wordLength);
   });
 
   // when a client finishes the race, this is called to relay that client's name back to the entire room which lets each client who came in what place by checking the order of the players' names sent to the client
-  socket.on("game_finish", (playerName, roomId) => {
-    io.to(roomId).emit("race_place", playerName);
+  socket.on("game_finish", (playerEmail, roomId) => {
+    io.to(roomId).emit("race_place", playerEmail);
+  });
+
+  socket.on("send_wpm", (playerEmail, room, wpm) => {
+    socket.to(room).emit("receive_wpm", playerEmail, wpm);
   });
 
   // on disconnect, remove them from the rooms const and check if they're the last one to disconnect -
