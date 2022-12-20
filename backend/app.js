@@ -230,27 +230,34 @@ io.on("connection", (socket) => {
       }
     }
 
-    let roomStillAlive = true;
-    console.log(`Index of room that client left: ${leavingRoomIndex}`);
-    rooms[leavingRoomIndex].playerCount--;
-    if (rooms[leavingRoomIndex].playerCount === 0) {
-      // delete room if last player is leaving
-      rooms.splice(leavingRoomIndex, 1);
-      roomStillAlive = false;
-    } else {
-      // otherwise remove the player from the room's information & tell other room members that the player left
-      let playerIndex = rooms[leavingRoomIndex].players.findIndex(
-        (p) => p.socketId === socket.id
-      );
-      rooms[leavingRoomIndex].players.splice(playerIndex, 1);
-      socket.to(rooms[leavingRoomIndex].id).emit("player_left", socket.id);
-    }
+    // check if leavingRoomIndex is null. If it is, don't do anything, the client likely tried to join a room 
+    // when they shouldn't have (by bypassing the genre selection and jumping straight to the /game/public route)
+    if (leavingRoomIndex !== null) {
+      let roomStillAlive = true;
+      console.log(`Index of room that client left: ${leavingRoomIndex}`);
+      rooms[leavingRoomIndex].playerCount--;
+      if (rooms[leavingRoomIndex].playerCount === 0) {
+        // delete room if last player is leaving
+        rooms.splice(leavingRoomIndex, 1);
+        roomStillAlive = false;
+      } else {
+        // otherwise remove the player from the room's information & tell other room members that the player left
+        let playerIndex = rooms[leavingRoomIndex].players.findIndex(
+          (p) => p.socketId === socket.id
+        );
+        rooms[leavingRoomIndex].players.splice(playerIndex, 1);
+        socket.to(rooms[leavingRoomIndex].id).emit("player_left", socket.id);
+      }
 
-    console.log(`Rooms after disconnect:`);
-    console.log(rooms);
-    if (roomStillAlive) {
-      console.log("players still in the room after last disconnect:");
-      console.log(rooms[leavingRoomIndex].players);
+      console.log(`Rooms after disconnect:`);
+      console.log(rooms);
+      if (roomStillAlive) {
+        console.log("players still in the room after last disconnect:");
+        console.log(rooms[leavingRoomIndex].players);
+      }
+    }
+    else {
+      console.log("disconnecting client was not in any room");
     }
   });
 });
