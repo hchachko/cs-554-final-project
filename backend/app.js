@@ -5,6 +5,7 @@ const { Server } = require("socket.io");
 const http = require("http");
 const { v4 } = require("uuid");
 const configRoutes = require("./routes");
+const axios = require("axios");
 const bp = require("body-parser");
 app.use(bp.json());
 const multer = require("multer");
@@ -105,11 +106,11 @@ let rooms = [];
 io.on("connection", (socket) => {
   console.log("new client connected: ", socket.id);
 
-  socket.on("join_public", (playerName, playerEmail) => {
+  socket.on("join_public", async (playerName, playerEmail, genre) => {
     if (rooms.length > 0) { // if there are already public rooms, hit this condition to join one 
       let allRoomsFull = true;
       for (let i = 0; i < rooms.length; i++) {
-        if (rooms[i].inProgress || rooms[i].playerCount === 4) {
+        if (rooms[i].genre !== genre || rooms[i].inProgress || rooms[i].playerCount === 4) {
             continue;
         }
         // if there are any rooms with space, join it
@@ -123,13 +124,27 @@ io.on("connection", (socket) => {
         break;
       }
 
-      if (allRoomsFull === true) { // all rooms are full, create a new one
+      if (allRoomsFull === true) { // all rooms are full, create a new one 
+        // grab random quote from database using genre
+        let quote;
+        const grabQuote = async (e) => {
+          try {
+            const { data } = await axios.get("http://localhost:4000/genre/getQuote/" + genre);
+            console.log("quote: " + data);
+            quote = data;
+          } catch (e) {
+            console.log(e);
+          }
+        };
+        await grabQuote();
+
         let room = {
           id: `${v4()}`,
           players: [ {displayName: playerName, email: playerEmail, socketId: socket.id} ],
           playerCount: 1,
           inProgress: false,
-          quote: `A day may come, when the courage of men fails, when we forsake our friends and break all bonds of Fellowship, but it is not this day!`
+          genre: genre,
+          quote: quote
         };
         rooms.push(room);
         socket.join(room.id);
@@ -138,12 +153,26 @@ io.on("connection", (socket) => {
       }
     }
     else { // create new room if there aren't any to join
+      // grab random quote from database using genre
+      let quote;
+      const grabQuote = async (e) => {
+        try {
+          const { data } = await axios.get("http://localhost:4000/genre/getQuote/" + genre);
+          console.log("quote: " + data);
+          quote = data;
+        } catch (e) {
+          console.log(e);
+        }
+      };
+      await grabQuote();
+
       let room = {
         id: `${v4()}`,
         players: [ {displayName: playerName, email: playerEmail, socketId: socket.id} ],
         playerCount: 1,
         inProgress: false,
-        quote: `A day may come, when the courage of men fails, when we forsake our friends and break all bonds of Fellowship, but it is not this day!`
+        genre: genre,
+        quote: quote
       };
       rooms.push(room);
       socket.join(room.id);

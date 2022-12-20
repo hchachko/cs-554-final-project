@@ -19,8 +19,7 @@ async function createGenre(genre) {
 
   let newGenre = {
     genre: genre,
-    quotes: [],
-    status: false,
+    quotes: []
   };
 
   const insertInfo = await genresCollection.insertOne(newGenre);
@@ -62,8 +61,7 @@ async function createQuote(genre, quote) {
 
   let newQuote = {
     _id: new ObjectId(),
-    quote: quote,
-    status: false,
+    quote: quote
   };
 
   genreObj["quotes"].push(newQuote);
@@ -181,7 +179,7 @@ async function validateQuote(genre, quote, accept) {
 //Get all genres with a status of true
 async function getGenres() {
   const genresCollection = await genres();
-  const genreData = await genresCollection.find({ status: true }).toArray();
+  const genreData = await genresCollection.find({}).toArray();
 
   if (!genreData || genreData.length === 0) {
     throw "Error: Could not find any validated genres.";
@@ -216,9 +214,7 @@ async function getQuote(genre) {
 
   let quoteList = [];
   for (quote of quotes) {
-    if (quote["status"] === true) {
-      quoteList.push(quote["quote"]);
-    }
+    quoteList.push(quote["quote"]);
   }
 
   if (quoteList.length === 0) {

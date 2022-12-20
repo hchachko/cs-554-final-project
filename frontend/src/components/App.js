@@ -13,6 +13,7 @@ import Account from "./Account";
 import Navigation from "./Navigation";
 import { BrowserRouter as Router, Route, Routes } from "react-router-dom";
 import { AuthProvider } from "../firebase/Auth";
+import NewGenreAndQuote from "./NewGenreAndQuote";
 
 function App() {
   return (
@@ -34,6 +35,9 @@ function App() {
               <Route path="/game/private" element={<RacePrivate />} />
               <Route path="/account" element={<PrivateRoute />}>
                 <Route path="/account" element={<Account />} />
+              </Route>
+              <Route path="/genre" element={<PrivateRoute />}>
+                <Route path="/genre" element={<NewGenreAndQuote />} />
               </Route>
             </Routes>
           </div>
