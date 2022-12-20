@@ -116,7 +116,7 @@ async function updateProfilePic(file, email, fileName) {
   //You can test this by uploading an image to the account page, then the oputput  (resized by image magick) will appear in the uploads folder in the backend
   //TY Bemin :)
   let oldProfilePic = userExists.file;
-  if (oldProfilePic == file) return "No changes needed!"
+  if (oldProfilePic == file) return "No changes needed!";
   const newProfilePic = {
     profilePic: file,
   };

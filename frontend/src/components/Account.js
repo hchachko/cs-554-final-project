@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useContext } from "react";
 import SignOutButton from "./SignOutButton";
 import { AuthContext } from "../firebase/Auth";
-import { Card} from "@mui/material";
+import { Card } from "@mui/material";
 import { Grid, CardContent, Typography } from "@mui/material";
 import { makeStyles } from "@mui/styles";
 import axios from "axios";
@@ -36,7 +36,9 @@ function Account() {
       if (currentUser && currentUser._delegate && currentUser._delegate.email) {
         console.log("This username is: " + currentUser._delegate.email);
         try {
-          const { data } = await axios.get("http://localhost:4000/user/"+currentUser._delegate.email);
+          const { data } = await axios.get(
+            "http://localhost:4000/user/" + currentUser._delegate.email
+          );
           setAccountData(data);
         } catch (e) {
           console.log(e);
@@ -52,14 +54,14 @@ function Account() {
     try {
       e.preventDefault();
       let formData = new FormData();
-      formData.append('file', fileData);
-      formData.append('fileName', fileData.name);
-      formData.append('email', currentUser._delegate.email);
+      formData.append("file", fileData);
+      formData.append("fileName", fileData.name);
+      formData.append("email", currentUser._delegate.email);
       console.log("This is what's being sent", formData);
       const config = {
         headers: {
-            'Content-Type': 'multipart/form-data'
-        }
+          "Content-Type": "multipart/form-data",
+        },
       };
       const { data } = await axios.post("http://localhost:4000/user/profilePic", formData, config);
       window.location.reload();
@@ -70,7 +72,7 @@ function Account() {
 
   const classes = useStyles();
   const [showForm, setShowForm] = useState(false);
-  const [fileData, setFileData] = useState({imageURL: ''});
+  const [fileData, setFileData] = useState({ imageURL: "" });
   const handleChange = (e) => {
     setFileData(e.target.files[0]);
   };
@@ -89,9 +91,12 @@ function Account() {
           <Typography gutterBottom variant="h5" component="div">
             {currentUser._delegate.displayName}
           </Typography>
-            {accountData && accountData.profilePic && (
-              <img 
-              src= {accountData.profilePic}
+          {accountData && accountData.profilePic && (
+            <img
+              src={
+                "http://localhost:4000/uploads/" +
+                accountData.profilePic.originalname
+              }
               alt="Profile"
               />
             )}
@@ -126,22 +131,22 @@ function Account() {
         <SignOutButton className={classes.button} />
       </Card>
       <Card className={classes.card} variant="outlined">
-          <CardContent>
-            <Typography gutterBottom variant="h6" component="div">
-              User Stats
-            </Typography>
-            {accountData && (
-              <ul>
-                <li>Games Played: {accountData.games_played}</li>
-                <li>
-                  Characters Per Second (CPM):{" "}
-                  {Math.round(accountData.wpm * 100) / 100}
-                </li>
-                <li>Games Won: {accountData.games_won}</li>
-              </ul>
-            )}
-          </CardContent>
-        </Card>
+        <CardContent>
+          <Typography gutterBottom variant="h6" component="div">
+            User Stats
+          </Typography>
+          {accountData && (
+            <ul>
+              <li>Games Played: {accountData.games_played}</li>
+              <li>
+                Characters Per Second (CPM):{" "}
+                {Math.round(accountData.wpm * 100) / 100}
+              </li>
+              <li>Games Won: {accountData.games_won}</li>
+            </ul>
+          )}
+        </CardContent>
+      </Card>
     </Grid>
   );
 }
