@@ -41,3 +41,11 @@
     npm start
     
   And that's it! Enjoy Typeracing :)
+  
+Heroku Version:
+  No steps required! Just enter the following URL: https://cs554-final-project.herokuapp.com/ 
+  Something to note: heroku uses a mongo cluster for its database needs, meaning it runs a different database than  the local host.
+  
+  
+  To access the local version branch on github, use the "main" branch. To access the heroku branch, use the "heroku version" branch.
+
