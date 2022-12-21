@@ -4,7 +4,7 @@ import axios from "axios";
 import "./styling.css";
 
 function RaceHome() {
-  const [allGenres, setAllGenres] = useState(null);
+  const [allGenres, setAllGenres] = useState([]);
   const [selectedGenre, setSelectedGenre] = useState(null);
 
   useEffect(() => {
@@ -62,7 +62,13 @@ function RaceHome() {
       <h2>Find a game!</h2>
       <div>
         <h3>Choose a genre to race on!</h3>
-        <div>{genreJSX}</div>
+        {allGenres.length === 0 && (
+          <p>
+            There aren't any genres to pick from. Create one now via the 'Create
+            Genres & Quotes' tab!
+          </p>
+        )}
+        {genreJSX && <div>{genreJSX}</div>}
       </div>
       <div>
         <h3>Public Match</h3>

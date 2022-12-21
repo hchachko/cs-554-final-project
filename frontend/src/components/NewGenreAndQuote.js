@@ -3,7 +3,7 @@ import axios from "axios";
 import "./styling.css";
 
 function NewGenreAndQuote() {
-  const [allGenres, setAllGenres] = useState(null);
+  const [allGenres, setAllGenres] = useState([]);
   const [selectedGenre, setSelectedGenre] = useState(null);
   const [newQuote, setNewQuote] = useState("");
   const [newGenre, setNewGenre] = useState({});
@@ -149,7 +149,10 @@ function NewGenreAndQuote() {
         <h2>Create a new quote!</h2>
         <div>
           <h3>Pick from an existing genre to add a quote to!</h3>
-          <div>{genreJSX}</div>
+          {allGenres.length === 0 && (
+            <p>There aren't any genres to pick from. Create one now below!</p>
+          )}
+          {genreJSX && <div>{genreJSX}</div>}
           {selectedGenre && (
             <form onSubmit={handleNewQuote}>
               <div>
