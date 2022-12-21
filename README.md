@@ -28,7 +28,7 @@
     
     npm start
     
-  4) With the server running, open a seperate console window. Move to the frontend directory:
+  4) With the server running, open a separate console window. Move to the frontend directory:
   
     cd frontend
     
